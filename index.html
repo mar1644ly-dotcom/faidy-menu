@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>منصة أصناف الفايدي - النظام السحابي 2026</title>
+    <title>منصة أصناف الفايدي - النظام الشامل الهجين 2026</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -72,20 +72,22 @@
         button { padding: 3px 8px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-family: 'Cairo'; color: white; margin: 0; transition: 0.2s; font-size: 10px; }
         .btn-panel-save { padding: 2px 6px; }
         .btn-admin { background: #28a745; }
-        .btn-share { background: #007bff; }
+        .btn-import-links { background: #0d6efd; border: 1px solid #fff; font-weight: 900; }
         .btn-zip { background: #ff9800; }
         .btn-pdf { background: #e74c3c; border: 1px solid #fff; }
         .btn-word { background: #2b579a; border: 1px solid #fff; }
         .btn-speedly { background: #800020; border: 1px solid #D4AF37; }
-        .btn-recovery { background: #e67e22; border: 1px solid #fff; font-weight: 900; }
         .btn-toggle-select { background: #4a0000; border: 1px solid #EEDC82; color: #EEDC82; }
-        .btn-import-links { background: #0d6efd; border: 1px solid #fff; font-weight: 900; }
+        
+        .btn-export-json { background: #27ae60; border: 1px solid #fff; font-weight: 900; }
+        .btn-import-json { background: #9b59b6; border: 1px solid #fff; font-weight: 900; }
+        .btn-drive-workflow { background: #8e44ad; border: 1px solid #fff; font-weight: 900; }
+
         #main-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding-bottom: 30px; width: 100%; }
         .item-card { background: white; width: 100%; max-width: 340px; padding: 12px; border-radius: 12px; border-bottom: 4px solid #800000; position: relative; box-shadow: 0 3px 6px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: auto; margin-top: 12px; box-sizing: border-box; break-inside: avoid; transition: background-color 0.3s; }
         .featured-badge { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: #D4AF37; color: #800000; padding: 2px 10px; border-radius: 20px; font-size: 10px; font-weight: 900; display: none; z-index: 6; border: 1px solid white; }
         .is-featured .featured-badge { display: block; }
         .code-tag { position: absolute; top: -10px; left: 12px; background: #333; color: #fff; padding: 2px 12px; border-radius: 4px; font-size: 10px; font-weight: bold; display: flex; gap: 6px; z-index: 5; min-width: 80px; justify-content: center; transition: 0.3s; }
-        .duplicate-alert { background: #ff0000 !important; color: white !important; border-radius: 5px; padding: 2px; box-shadow: 0 0 6px #ff0000; }
         .header-row { display: flex; justify-content: space-between; border-bottom: 1px solid #D4AF37; margin-bottom: 8px; padding-bottom: 6px; padding-top: 10px; gap: 8px; align-items: flex-start; }
         .name-display { font-size: 16px; font-weight: 900; color: #800000; flex: 1.2; outline: none; border-radius: 4px; padding: 2px; text-align: right; word-break: break-word; transition: 0.3s;}
         .left-controls-group { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
@@ -122,8 +124,8 @@
             .no-print, .admin-only, .customer-only, .delete-item-btn, .cat-select-inline, #issue-filters, .menu-export-checkbox-container { display: none !important; }
             .faidy-top-bar { border-radius: 0 !important; margin-bottom: 20px !important; }
             .faidy-logo-img { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; border: 2px solid #D4AF37 !important; }
-            #main-container { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 25px !important; padding-bottom: 0 !important; }
-            .item-card { width: 100% !important; max-width: none !important; box-shadow: none !important; border: 1px solid #ddd !important; border-bottom: 5px solid #800000 !important; break-inside: avoid !important; page-break-inside: avoid !important; margin-top: 0 !important; background: white !important; }
+            #main-container { display: block !important; }
+            .item-card { width: 48% !important; display: inline-block !important; margin-right: 1% !important; vertical-align: top !important; max-width: none !important; box-shadow: none !important; border: 1px solid #ddd !important; border-bottom: 5px solid #800000 !important; break-inside: avoid !important; page-break-inside: avoid !important; margin-top: 10px !important; background: white !important; }
             .name-display, .price-display, .unit-display, .editable-code { border: none !important; }
         }
     </style>
@@ -146,7 +148,7 @@
             <div class="faidy-logo-container">
                 <label class="faidy-logo-label">
                     <img src="https://via.placeholder.com/120?text=الشعار" alt="شعار حلواني أبناء الفايدي" class="faidy-logo-img" id="faidyMainLogo">
-                    <input type="file" id="logo-file-input" style="display:none" class="admin-only" onchange="uploadMainLogo(this)">
+                    <input type="file" style="display:none" class="admin-only" onchange="uploadMainLogo(this)">
                 </label>
                 <div class="brand-right-title" onclick="toggleLoginBox()">حلواني أبناء الفايدي 1989</div>
             </div>
@@ -200,7 +202,7 @@
                     <b>الفروع:</b>
                     <input type="text" id="bNameInp" placeholder="الاسم...">
                     <input type="text" id="bPhoneInp" placeholder="الهاتف...">
-                    <input type="text" id="bPassInp" placeholder="رقم سري للفرع..." style="width:75px;" title="الرقم السري الخاص بهذا الفرع فقط">
+                    <input type="text" id="bPassInp" placeholder="رقم سري للفرع..." style="width:75px;">
                     <button class="btn-panel-save" onclick="addNewBranch()" style="background:#28a745">➕</button>
                 </div>
                 
@@ -216,20 +218,26 @@
             
             <div class="admin-actions-row">
                 <button class="btn-toggle-select" onclick="toggleSelectAllItems()">⚙️ تحديد/إلغاء الكل</button>
-                <button class="btn-recovery" onclick="document.getElementById('recovery-upload').click()">☁️ رفع الأصناف القديمة للسحابة</button>
+                
                 <button class="btn-import-links" onclick="document.getElementById('import-links-upload').click()">🔗 استيراد الروابط (إكسيل)</button>
                 <input type="file" id="import-links-upload" accept=".xlsx, .xls" style="display:none" onchange="processLinksExcel(this)">
                 
+                <button class="btn-drive-workflow" onclick="exportForGoogleDriveWorkflow()">📁 ملف إكسل مع الصور لقوقل درايف</button>
+
+                <button class="btn-export-json" onclick="exportLocalToJSON()">💾 حفظ عملي (JSON)</button>
+                <button class="btn-import-json" onclick="document.getElementById('import-json-upload').click()">📥 حقن نسخة احتياطية (JSON)</button>
+                <input type="file" id="import-json-upload" accept=".json" style="display:none" onchange="importLocalJSON(this)">
+
                 <button class="btn-admin" onclick="addNewItemWithCategory()">➕ صنف جديد</button>
+                
                 <button class="btn-zip" onclick="exportAllImagesFlat()" style="background:#d35400;">📦 كل الصور</button>
                 <button class="btn-zip" onclick="exportAllImages()" style="background:#ff9800;">📂 صور مقسمة</button>
                 <button class="btn-speedly" onclick="exportExcelWithLocalImages()" style="background:#157347; border: 1px solid #D4AF37;">📊 إكسل متكامل</button>
                 <button class="btn-word" onclick="exportWordWithLocalImages()">📝 وورد متكامل</button>
                 <button class="btn-pdf" onclick="exportToPDF()">📄 طباعة PDF</button>
                 <button class="btn-speedly" onclick="exportDataToSpeedlyXLSX()">📥 إكسل سبيدلي</button>
+                <button class="btn-export-html" onclick="exportStandaloneMenu()">📱 تصدير منيو للزبائن (HTML)</button>
             </div>
-            
-            <input type="file" id="recovery-upload" accept=".html" style="display:none" onchange="processRecoveryFile(this)">
         </div>
     </div>
 
@@ -252,6 +260,7 @@
         firebase.initializeApp(firebaseConfig);
         const dbCloud = firebase.database();
 
+        let dbOffline;
         let allItemsGlobal = [];
         let categories = [];
         let hiddenCategories = []; 
@@ -265,62 +274,358 @@
         window.contactItemLink = ""; 
         window.contactItemPrice = "";
         
+        let renderTimeout = null;
+        let lastCategoriesString = "";
+
         document.addEventListener("DOMContentLoaded", function() {
             loadHiddenCategoriesStorage(); 
-            loadCloudData(); // كل شيء الآن يتم تحميله من السحابة مباشرة
+            initOfflineDBAndLoad(); // التحميل الفوري من الذاكرة المحلية كخطوة أولى
         });
 
         // =========================================================
-        // التزامن الحي مع السحابة (Real-time Cloud Sync)
+        // نظام الذاكرة العميقة (Offline-First) لسرعة الصاروخ
+        // =========================================================
+        function initOfflineDBAndLoad() {
+            const request = indexedDB.open("FaidyOfflineDB", 1);
+            request.onupgradeneeded = function(event) {
+                dbOffline = event.target.result;
+                if (!dbOffline.objectStoreNames.contains('items')) { dbOffline.createObjectStore('items', { keyPath: 'id' }); }
+                if (!dbOffline.objectStoreNames.contains('settings')) { dbOffline.createObjectStore('settings', { keyPath: 'id' }); }
+            };
+            request.onsuccess = function(event) {
+                dbOffline = event.target.result;
+                loadOfflineDataFirst();
+            };
+            request.onerror = function() { loadCloudData(); };
+        }
+
+        function loadOfflineDataFirst() {
+            const txSet = dbOffline.transaction('settings', 'readonly');
+            const storeSet = txSet.objectStore('settings');
+            storeSet.get('logo').onsuccess = e => { if(e.target.result && document.getElementById("faidyMainLogo").src.includes('placeholder')) document.getElementById("faidyMainLogo").src = e.target.result.value; };
+            storeSet.get('branchImg').onsuccess = e => { 
+                if(e.target.result) {
+                    document.getElementById("main-header-branches-img").src = e.target.result.value;
+                    const preview = document.getElementById("branchesUnifiedImgPreview");
+                    if(preview) { preview.src = e.target.result.value; preview.style.display = "inline-block"; }
+                }
+            };
+            storeSet.get('branchesList').onsuccess = e => { if(e.target.result) { window.globalBranches = e.target.result.value; renderBranches(); }};
+
+            const tx = dbOffline.transaction('items', 'readonly');
+            const store = tx.objectStore('items');
+            store.getAll().onsuccess = function(e) {
+                if(e.target.result && e.target.result.length > 0 && allItemsGlobal.length === 0) {
+                    allItemsGlobal = e.target.result;
+                    queueRender();
+                }
+                loadCloudData(); // الاتصال بفايربيس بعد أن تفتح الشاشة فوراً
+            };
+        }
+
+        function updateItemInDB(item) { if(dbOffline) { const tx = dbOffline.transaction('items', 'readwrite'); tx.objectStore('items').put(item); } }
+        function deleteItemFromDB(id) { if(dbOffline) { const tx = dbOffline.transaction('items', 'readwrite'); tx.objectStore('items').delete(id); } }
+        function saveSetting(key, value) { if(dbOffline) { const tx = dbOffline.transaction('settings', 'readwrite'); tx.objectStore('settings').put({ id: key, value: value }); } }
+
+        // =========================================================
+        // التزامن الذكي والجزئي مع السحابة (Smart Cloud Sync)
         // =========================================================
         function loadCloudData() {
-            // سحب الأصناف
-            dbCloud.ref('items').on('value', (snapshot) => {
-                const data = snapshot.val();
-                allItemsGlobal = data ? Object.values(data) : [];
-                renderItemsUI();
-            });
-
-            // سحب الإعدادات (الفروع، الشعار، وصورة الفروع)
             dbCloud.ref('settings').on('value', (snapshot) => {
                 const settings = snapshot.val() || {};
-                
-                if (settings.logo) { document.getElementById("faidyMainLogo").src = settings.logo; }
-                
+                if (settings.logo) { document.getElementById("faidyMainLogo").src = settings.logo; saveSetting('logo', settings.logo); }
                 if (settings.branchImage) { 
                     const preview = document.getElementById("branchesUnifiedImgPreview"); 
                     const headerImg = document.getElementById("main-header-branches-img"); 
                     if(preview) { preview.src = settings.branchImage; preview.style.display = "inline-block"; } 
                     if(headerImg) { headerImg.src = settings.branchImage; } 
+                    saveSetting('branchImg', settings.branchImage);
                 }
-                
-                if (settings.branches) {
-                    window.globalBranches = Object.values(settings.branches);
-                } else {
-                    window.globalBranches = [ { id: 1, name: "الرئيسي", phone: "091-XXXXXXX", pass: "2026" } ];
-                }
+                if (settings.branches) { window.globalBranches = Object.values(settings.branches); saveSetting('branchesList', window.globalBranches); } 
+                else { window.globalBranches = [ { id: 1, name: "الرئيسي", phone: "091-XXXXXXX", pass: "2026" } ]; }
                 renderBranches();
             });
+
+            // تقنية القراءة المقطعية (تسحب التغييرات فقط ولا تحمل كل البيانات مرة أخرى)
+            dbCloud.ref('items').on('child_added', (snapshot) => {
+                const item = snapshot.val();
+                const idx = allItemsGlobal.findIndex(i => i.id === item.id);
+                if(idx === -1) { allItemsGlobal.push(item); } else { allItemsGlobal[idx] = item; }
+                updateItemInDB(item);
+                queueRender();
+            });
+
+            dbCloud.ref('items').on('child_changed', (snapshot) => {
+                const item = snapshot.val();
+                const idx = allItemsGlobal.findIndex(i => i.id === item.id);
+                if(idx !== -1) { allItemsGlobal[idx] = item; } else { allItemsGlobal.push(item); }
+                updateItemInDB(item);
+                queueRender();
+            });
+
+            dbCloud.ref('items').on('child_removed', (snapshot) => {
+                const item = snapshot.val();
+                allItemsGlobal = allItemsGlobal.filter(i => i.id !== item.id);
+                deleteItemFromDB(item.id);
+                queueRender();
+            });
+        }
+
+        // =========================================================
+        // تقنية التجميع وتخفيف الضغط عن المتصفح (Chunked Rendering)
+        // =========================================================
+        function queueRender() {
+            if(renderTimeout) clearTimeout(renderTimeout);
+            renderTimeout = setTimeout(() => { renderItemsUIBatched(); }, 150);
+        }
+
+        let renderIndex = 0;
+        const BATCH_SIZE = 15;
+        let filteredList = [];
+
+        function updateCategoriesUI() {
+            categories = [...new Set(allItemsGlobal.map(i => i.cat))].filter(Boolean);
+            if(categories.length === 0) categories = ["عام"];
+            const currentCatString = categories.join(',');
+            if (currentCatString !== lastCategoriesString) {
+                lastCategoriesString = currentCatString;
+                const sel = document.getElementById('mainCategory');
+                const filterArea = document.getElementById('filter-tags');
+                if(sel) sel.innerHTML = '';
+                if(filterArea) filterArea.innerHTML = '<button class="filter-btn '+(window.currentFilter==='all'?'active':'')+'" onclick="filterByCat(\'all\', this)">الكل</button>';
+                categories.forEach(c => {
+                    if(sel) sel.add(new Option(c, c));
+                    if(filterArea) {
+                        const btn = document.createElement('button'); 
+                        btn.className = 'filter-btn ' + (window.currentFilter===c?'active':''); 
+                        const isHidden = hiddenCategories.includes(c);
+                        if (isHidden) { btn.classList.add('hidden-cat'); }
+                        btn.innerHTML = `${c} <span class="cat-visibility-toggle admin-only" title="إظهار/حجب القسم" onclick="toggleCategoryVisibility('${c}', event)">${isHidden ? '🚫' : '👁️'}</span>`;
+                        btn.onclick = function() { filterByCat(c, this); }; 
+                        filterArea.appendChild(btn);
+                    }
+                });
+            }
+        }
+
+        function renderItemsUIBatched() {
+            updateCategoriesUI();
+            runDataAudit();
+            
+            const container = document.getElementById('main-container');
+            container.innerHTML = ''; 
+            
+            const query = document.getElementById('globalSearch').value.toLowerCase(); 
+            const cat = window.currentFilter || 'all'; 
+            const issue = window.currentIssueFilter || 'none';
+            const isAdmin = !document.body.classList.contains('admin-locked');
+            
+            filteredList = allItemsGlobal.filter(data => {
+                if(data.isPlaceholder) return false;
+                if(!isAdmin && hiddenCategories.includes(data.cat)) return false;
+                if(!isAdmin && data.selectedForMenu === false) return false;
+                
+                const name = (data.name||'').toLowerCase();
+                const code = (data.code||'').toLowerCase();
+                if(query && !(name.includes(query) || code.includes(query))) return false;
+                
+                if(cat !== 'all' && data.cat !== cat) return false;
+                
+                if (issue !== 'none') {
+                    const isNoPrice = (data.price === '0.00' || data.price === '0' || data.price === '');
+                    const isNoCode = (data.code === '000' || data.code === '00' || data.code === '0' || data.code === '');
+                    const isNoImg = (!data.img || data.img.includes('placeholder.com') || data.img === '');
+                    const isNoName = (!data.name || data.name.trim() === '' || data.name === 'صنف جديد');
+                    const isNoLink = (!data.driveLink || data.driveLink.trim() === '');
+                    
+                    if (issue === 'no-price' && !isNoPrice) return false;
+                    if (issue === 'no-code' && !isNoCode) return false;
+                    if (issue === 'no-img' && !isNoImg) return false;
+                    if (issue === 'no-name' && !isNoName) return false;
+                    if (issue === 'no-link' && !isNoLink) return false;
+                    if (issue === 'all-issues' && !(isNoPrice||isNoCode||isNoImg||isNoName||isNoLink)) return false;
+                }
+                return true;
+            }).sort((a,b) => a.id - b.id);
+            
+            const tc = document.getElementById('total-count');
+            if(tc) tc.innerText = filteredList.length;
+            
+            renderIndex = 0;
+            processNextBatch();
+        }
+
+        function processNextBatch() {
+            const container = document.getElementById('main-container');
+            const end = Math.min(renderIndex + BATCH_SIZE, filteredList.length);
+            const fragment = document.createDocumentFragment();
+            
+            for (let i = renderIndex; i < end; i++) {
+                fragment.appendChild(createItemCardDOM(filteredList[i]));
+            }
+            container.appendChild(fragment);
+            renderIndex = end;
+            
+            if (renderIndex < filteredList.length) { setTimeout(processNextBatch, 30); } // التحميل الكسول المتبقي
+        }
+
+        function createItemCardDOM(data) {
+            const card = document.createElement('div');
+            card.className = 'item-card ' + (data.featured ? 'is-featured' : '');
+            card.dataset.id = data.id; card.dataset.category = data.cat;
+            
+            let catOptions = categories.map(c => `<option value="${c}" ${c === data.cat ? 'selected' : ''}>${c}</option>`).join('');
+            const isSelected = data.selectedForMenu !== false;
+            
+            const safeName = (data.name || '').toString().replace(/'/g, "&#39;").replace(/"/g, '&quot;'); 
+            const safeCode = (data.code || '000').toString().replace(/'/g, "&#39;").replace(/"/g, '&quot;'); 
+            const safeLink = (data.driveLink || '').toString().replace(/'/g, "&#39;").replace(/"/g, '&quot;'); 
+            const safePrice = (data.price || '0.00').toString().replace(/'/g, "&#39;").replace(/"/g, '&quot;');
+
+            const isAdmin = !document.body.classList.contains('admin-locked');
+            let issueHighlight = '';
+            if (isAdmin && window.currentIssueFilter === 'all-issues') {
+                const isNoImg = (!data.img || data.img.includes('placeholder.com') || data.img === '');
+                if(isNoImg) issueHighlight = 'border: 2px solid red;';
+            }
+
+            card.innerHTML = `
+                <div class="delete-item-btn admin-only" onclick="deleteItem(${data.id})" style="position:absolute; top:-10px; left:-10px; background:#dc3545; color:white; border-radius:50%; width:25px; height:25px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:bold; border:2px solid white; z-index:10;">×</div>
+                <div class="featured-badge">⭐ صنف مميز</div>
+                <div class="code-tag">
+                    <span class="admin-only" onclick="toggleFeatured(${data.id}, this); event.preventDefault();" style="cursor:pointer; margin-right:5px; filter:${data.featured ? 'none' : 'grayscale(1)'}">⭐</span>
+                    <span>رقم الصنف:</span>
+                    <div class="editable-code" contenteditable="true" onfocus="selectAllText(this)" onblur="updateField(${data.id}, 'code', this.innerText);">${data.code || '000'}</div>
+                </div>
+                <select class="cat-select-inline admin-only" onchange="updateItemCategoryInline(${data.id}, this.value)">${catOptions}</select>
+                <div class="header-row">
+                    <div class="name-display" contenteditable="true" onfocus="selectAllText(this)" onblur="updateField(${data.id}, 'name', this.innerText)">${data.name || 'بدون اسم'}</div>
+                    <div class="left-controls-group">
+                        <div class="price-container">
+                            <div class="price-display" contenteditable="true" onfocus="selectAllText(this)" onblur="updateField(${data.id}, 'price', this.innerText);">${data.price || '0.00'}</div>
+                            <span>د.ل</span>
+                        </div>
+                        <div class="unit-area">
+                            <span>الوحدة:</span>
+                            <div class="unit-display" contenteditable="true" onfocus="selectAllText(this)" onblur="updateField(${data.id}, 'unit', this.innerText)">${data.unit || ''}</div>
+                        </div>
+                        <div class="menu-export-checkbox-container admin-only">
+                            <input type="checkbox" id="chk-${data.id}" ${isSelected ? 'checked' : ''} onchange="updateItemSelection(${data.id}, this.checked)">
+                            <label for="chk-${data.id}">تصدير</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="img-preview-container" style="${issueHighlight}">
+                    <label class="img-preview-label">
+                        <img src="${data.img || 'https://via.placeholder.com/350x220?text=إضافة+صورة'}" id="img-${data.id}" loading="lazy">
+                        <input type="file" style="display:none" class="admin-only" accept="image/*" onchange="updateImg(${data.id}, this)">
+                    </label>
+                </div>
+                <div class="admin-only" style="margin-top:8px;">
+                    <button class="gold-drive-btn" data-link="${data.driveLink || ''}" onclick="promptDriveLink(${data.id}, this)">
+                        ${data.driveLink ? '✅ تعديل رابط قوقل درايف' : '🔗 إضافة رابط قوقل درايف'}
+                    </button>
+                </div>
+                <button class="customer-only order-btn-card no-print" onclick="openContactModal('${safeName}', '${safeCode}', '${safeLink}', '${safePrice}')">🛒 اطلب الان عبر واتساب</button>
+            `;
+            return card;
+        }
+
+        // =========================================================
+        // خوارزمية الضغط التلقائي للصور (Auto-Compression)
+        // =========================================================
+        function updateImg(id, input) { 
+            if (input.files && input.files[0]) { 
+                const file = input.files[0];
+                const reader = new FileReader(); 
+                reader.onload = function(e) { 
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width; let height = img.height;
+                        const MAX_DIMENSION = 500; // تصغير الأبعاد لتقليل الحجم بشكل جبار
+
+                        if (width > height) { if (width > MAX_DIMENSION) { height *= MAX_DIMENSION / width; width = MAX_DIMENSION; } } 
+                        else { if (height > MAX_DIMENSION) { width *= MAX_DIMENSION / height; height = MAX_DIMENSION; } }
+                        
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // ضغط الصورة إلى جودة 60% لتقليل حجم النص (Base64) بنسبة 90%
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                        
+                        document.getElementById('img-' + id).src = compressedBase64;
+                        updateField(id, 'img', compressedBase64);
+                    };
+                    img.src = e.target.result;
+                }; 
+                reader.readAsDataURL(file); 
+            } 
+        }
+
+        // =========================================================
+        // التصدير والاستيراد (JSON Hybrid)
+        // =========================================================
+        function exportLocalToJSON() {
+            if(allItemsGlobal.length === 0) { alert("⚠️ لا توجد بيانات لتصديرها."); return; }
+            let exportData = { items: {}, settings: { branches: {}, logo: document.getElementById("faidyMainLogo").src.includes("data:image") ? document.getElementById("faidyMainLogo").src : "", branchImage: document.getElementById("main-header-branches-img").src.includes("data:image") ? document.getElementById("main-header-branches-img").src : "" } };
+            allItemsGlobal.forEach(i => { exportData.items[i.id] = i; });
+            window.globalBranches.forEach(b => { exportData.settings.branches[b.id] = b; });
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json;charset=utf-8" });
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "faidy_work_backup_" + Date.now() + ".json"; link.click();
+            alert("✅ تم حفظ نسخة من عملك في ملف JSON بنجاح!");
+        }
+
+        function importLocalJSON(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    let itemsToImport = []; let branchesToImport = [];
+                    if (data.items) itemsToImport = Object.values(data.items); else itemsToImport = Object.values(data); 
+                    if (data.settings && data.settings.branches) branchesToImport = Object.values(data.settings.branches);
+
+                    allItemsGlobal = itemsToImport.filter(i => !i.isPlaceholder);
+                    if(branchesToImport.length > 0) window.globalBranches = branchesToImport;
+                    if (data.settings && data.settings.logo) document.getElementById("faidyMainLogo").src = data.settings.logo;
+                    if (data.settings && data.settings.branchImage) {
+                        document.getElementById("main-header-branches-img").src = data.settings.branchImage;
+                        document.getElementById("branchesUnifiedImgPreview").src = data.settings.branchImage;
+                        document.getElementById("branchesUnifiedImgPreview").style.display = "inline-block";
+                    }
+                    
+                    queueRender();
+                    renderBranches();
+
+                    const tx = dbOffline.transaction(['items', 'settings'], 'readwrite');
+                    const storeItems = tx.objectStore('items'); storeItems.clear();
+                    itemsToImport.forEach(i => { if(!i.isPlaceholder) storeItems.put(i); });
+                    if(branchesToImport.length > 0) tx.objectStore('settings').put({ id: 'branchesList', value: branchesToImport });
+                    if(data.settings && data.settings.logo) tx.objectStore('settings').put({ id: 'logo', value: data.settings.logo });
+                    if(data.settings && data.settings.branchImage) tx.objectStore('settings').put({ id: 'branchImg', value: data.settings.branchImage });
+
+                    let updates = {};
+                    itemsToImport.forEach(i => { updates['items/' + i.id] = i; });
+                    if(branchesToImport.length > 0) { branchesToImport.forEach(b => { updates['settings/branches/' + b.id] = b; }); }
+                    if (data.settings && data.settings.logo) updates['settings/logo'] = data.settings.logo;
+                    if (data.settings && data.settings.branchImage) updates['settings/branchImage'] = data.settings.branchImage;
+                    
+                    dbCloud.ref().update(updates).catch(e => console.log("وضع الأوفلاين: التعديلات في اللوحة فقط وتنتظر الإنترنت."));
+                    alert("✅ تم حقن البيانات بنجاح! \nإذا كنت متصلاً بالإنترنت سيتم تحديث السحابة فوراً.");
+                } catch (error) { alert("❌ خطأ في قراءة الملف: " + error.message); }
+                input.value = '';
+            };
+            reader.readAsText(file);
         }
 
         // =========================================================
         // دوال الإعدادات والشعارات والفروع (حفظ سحابي)
         // =========================================================
-        function uploadMainLogo(input) { 
-            if (input.files && input.files[0]) { 
-                const reader = new FileReader(); 
-                reader.onload = function(e) { dbCloud.ref('settings/logo').set(e.target.result); alert("✅ تم رفع الشعار للسحابة بنجاح!"); }; 
-                reader.readAsDataURL(input.files[0]); 
-            } 
-        }
-
-        function uploadBranchesUnifiedImage(input) { 
-            if (input.files && input.files[0]) { 
-                const reader = new FileReader(); 
-                reader.onload = function(e) { dbCloud.ref('settings/branchImage').set(e.target.result); alert("✅ تم رفع صورة الفروع للسحابة بنجاح!"); }; 
-                reader.readAsDataURL(input.files[0]); 
-            } 
-        }
+        function uploadMainLogo(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = function(e) { dbCloud.ref('settings/logo').set(e.target.result); }; reader.readAsDataURL(input.files[0]); } }
+        function uploadBranchesUnifiedImage(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = function(e) { dbCloud.ref('settings/branchImage').set(e.target.result); }; reader.readAsDataURL(input.files[0]); } }
         
         function renderBranches() { 
             const container = document.getElementById('branchesContainer'); if(!container) return; 
@@ -335,56 +640,25 @@
         }
 
         function addNewBranch() { 
-            const name = document.getElementById('bNameInp').value.trim(); 
-            const phone = document.getElementById('bPhoneInp').value.trim(); 
-            const pass = document.getElementById('bPassInp').value.trim() || "0000";
-            if (name && phone) { 
-                const newBranch = { id: Date.now(), name: name, phone: phone, pass: pass };
-                dbCloud.ref('settings/branches/' + newBranch.id).set(newBranch);
-                document.getElementById('bNameInp').value = ''; document.getElementById('bPhoneInp').value = ''; document.getElementById('bPassInp').value = '';
-            } 
+            const name = document.getElementById('bNameInp').value.trim(); const phone = document.getElementById('bPhoneInp').value.trim(); const pass = document.getElementById('bPassInp').value.trim() || "0000";
+            if (name && phone) { const newBranch = { id: Date.now(), name: name, phone: phone, pass: pass }; dbCloud.ref('settings/branches/' + newBranch.id).set(newBranch); document.getElementById('bNameInp').value = ''; document.getElementById('bPhoneInp').value = ''; document.getElementById('bPassInp').value = ''; } 
         }
 
         function editBranch(id) { 
             let branch = window.globalBranches.find(b => b.id === id); 
             if (branch) { 
-                let newName = prompt("تعديل اسم الفرع:", branch.name); 
-                let newPhone = prompt("تعديل رقم الهاتف:", branch.phone); 
-                let newPass = prompt("تعديل الرقم السري لهذا الفرع:", branch.pass || "0000");
-                if (newName && newPhone && newPass) { 
-                    dbCloud.ref('settings/branches/' + id).update({ name: newName.trim(), phone: newPhone.trim(), pass: newPass.trim() });
-                } 
+                let newName = prompt("تعديل اسم الفرع:", branch.name); let newPhone = prompt("تعديل رقم الهاتف:", branch.phone); let newPass = prompt("تعديل الرقم السري لهذا الفرع:", branch.pass || "0000");
+                if (newName && newPhone && newPass) { dbCloud.ref('settings/branches/' + id).update({ name: newName.trim(), phone: newPhone.trim(), pass: newPass.trim() }); } 
             } 
         }
-        
         function deleteBranch(id) { if (confirm("حذف هذا الفرع؟")) { dbCloud.ref('settings/branches/' + id).remove(); } }
 
-        // =========================================================
-        // نظام الدخول متعدد كلمات المرور للفروع 
-        // =========================================================
-        function toggleLoginBox() {
-            const box = document.getElementById('secretLoginBox');
-            box.classList.toggle('show');
-        }
-
+        function toggleLoginBox() { document.getElementById('secretLoginBox').classList.toggle('show'); }
         function checkPassword() {
-            const pass = document.getElementById('adminPassword').value;
-            let isValid = false;
-            
+            const pass = document.getElementById('adminPassword').value; let isValid = false;
             if(pass === "2026") isValid = true; 
-            
-            window.globalBranches.forEach(b => { 
-                if(b.pass && b.pass === pass) isValid = true; 
-            });
-
-            if(isValid) {
-                document.body.classList.remove('admin-locked');
-                document.getElementById('secretLoginBox').classList.remove('show');
-                alert("✅ تم تفعيل اللوحة السحابية بنجاح.");
-                renderItemsUI(); 
-            } else {
-                alert("❌ الرقم السري غير صحيح!");
-            }
+            window.globalBranches.forEach(b => { if(b.pass && b.pass === pass) isValid = true; });
+            if(isValid) { document.body.classList.remove('admin-locked'); document.getElementById('secretLoginBox').classList.remove('show'); alert("✅ تم تفعيل اللوحة الإدارية بنجاح."); queueRender(); } else { alert("❌ الرقم السري غير صحيح!"); }
             document.getElementById('adminPassword').value = "";
         }
 
@@ -392,216 +666,70 @@
         // دوال الزبون (واتساب والاتصال)
         // =========================================================
         function updateCustomerBranchesModal() {
-            let selectEl = document.getElementById("branch-select");
-            selectEl.innerHTML = "";
+            let selectEl = document.getElementById("branch-select"); selectEl.innerHTML = "";
             if (window.globalBranches.length > 0) { 
-                window.globalBranches.forEach(b => { 
-                    let p = b.phone.replace(/[^\d+]/g, ''); 
-                    if (p.startsWith('0')) p = '218' + p.substring(1); 
-                    selectEl.innerHTML += '<option value="' + p + '">فرع ' + b.name + ' (' + b.phone + ')</option>'; 
-                }); 
-            } else {
-                selectEl.innerHTML = '<option value="218900000000">الفرع الرئيسي</option>';
-            }
+                window.globalBranches.forEach(b => { let p = b.phone.replace(/[^\d+]/g, ''); if (p.startsWith('0')) p = '218' + p.substring(1); selectEl.innerHTML += '<option value="' + p + '">فرع ' + b.name + ' (' + b.phone + ')</option>'; }); 
+            } else { selectEl.innerHTML = '<option value="218900000000">الفرع الرئيسي</option>'; }
         }
 
-        function openContactModal(name, code, link, price) { 
-            window.contactItemName = name; 
-            window.contactItemCode = code;  
-            window.contactItemLink = link; 
-            window.contactItemPrice = price; 
-            document.getElementById("modal-item-desc").innerText = "الصنف: " + name + " (رقم: " + code + ") | السعر: " + price + " د.ل"; 
-            document.getElementById("contact-modal").style.display = "flex"; 
-        } 
-        
+        function openContactModal(name, code, link, price) { window.contactItemName = name; window.contactItemCode = code; window.contactItemLink = link; window.contactItemPrice = price; document.getElementById("modal-item-desc").innerText = "الصنف: " + name + " (رقم: " + code + ") | السعر: " + price + " د.ل"; document.getElementById("contact-modal").style.display = "flex"; } 
         function closeContactModal() { document.getElementById("contact-modal").style.display = "none"; } 
         
         function sendWA() { 
             const p = document.getElementById("branch-select").value; 
-            let textMsg = "مرحباً حلواني أبناء الفايدي، أود طلب الصنف: " + window.contactItemName + "\\nرقم الصنف: " + window.contactItemCode + " | السعر: " + window.contactItemPrice + " د.ل"; 
-            if(window.contactItemLink) { textMsg += "\\n🌐 [ 📸 صورة الصنف: " + window.contactItemLink + " ]"; } 
-            const text = encodeURIComponent(textMsg); 
-            window.open("https://wa.me/" + p + "?text=" + text, "_blank"); 
-            closeContactModal(); 
+            let textMsg = "مرحباً حلواني أبناء الفايدي، أود طلب الصنف: *" + window.contactItemName + "*\\nرقم الصنف: " + window.contactItemCode + " | السعر: " + window.contactItemPrice + " د.ل\\n"; 
+            if(window.contactItemLink) { textMsg += "-----------------------------------\\n❖ [ 📸 رابط الصورة المعتمدة في النظام ]:\\n" + window.contactItemLink; } 
+            window.open("https://wa.me/" + p + "?text=" + encodeURIComponent(textMsg), "_blank"); closeContactModal(); 
         } 
-        
         function makeCall() { const p = document.getElementById("branch-select").value; window.location.href = "tel:+" + p; closeContactModal(); }
 
         // =========================================================
-        // واجهة الأصناف
+        // واجهة الأصناف والتدقيق
         // =========================================================
         function loadHiddenCategoriesStorage() { const saved = localStorage.getItem("faidy_hidden_categories"); if (saved) { hiddenCategories = JSON.parse(saved); } }
-        function toggleCategoryVisibility(catName, event) { event.stopPropagation(); const index = hiddenCategories.indexOf(catName); if (index > -1) { hiddenCategories.splice(index, 1); } else { hiddenCategories.push(catName); } localStorage.setItem("faidy_hidden_categories", JSON.stringify(hiddenCategories)); renderItemsUI(); }
+        function toggleCategoryVisibility(catName, event) { event.stopPropagation(); const index = hiddenCategories.indexOf(catName); if (index > -1) { hiddenCategories.splice(index, 1); } else { hiddenCategories.push(catName); } localStorage.setItem("faidy_hidden_categories", JSON.stringify(hiddenCategories)); queueRender(); }
 
-        function renderItemsUI() {
-            categories = [...new Set(allItemsGlobal.map(i => i.cat))];
-            if(categories.length === 0) categories = ["عام"];
-            
-            const sel = document.getElementById('mainCategory');
-            const filterArea = document.getElementById('filter-tags');
-            if(filterArea) filterArea.innerHTML = '<button class="filter-btn active" onclick="filterByCat(\'all\', this)">الكل</button>';
-            if(sel) sel.innerHTML = '';
-
-            categories.forEach(c => {
-                if(sel) sel.add(new Option(c, c));
-                const btn = document.createElement('button'); btn.className = 'filter-btn'; 
-                const isHidden = hiddenCategories.includes(c);
-                if (isHidden) { btn.classList.add('hidden-cat'); }
-                btn.innerHTML = `${c} <span class="cat-visibility-toggle admin-only" title="إظهار/حجب القسم" onclick="toggleCategoryVisibility('${c}', event)">${isHidden ? '🚫' : '👁️'}</span>`;
-                btn.onclick = function() { filterByCat(c, this); }; 
-                if(filterArea) filterArea.appendChild(btn);
-            });
-            
-            document.getElementById('main-container').innerHTML = '';
-            const isAdmin = !document.body.classList.contains('admin-locked');
-            
-            allItemsGlobal.sort((a,b)=>a.id-b.id).forEach(i => {
-                if(!isAdmin && hiddenCategories.includes(i.cat)) return;
-                if(!isAdmin && i.selectedForMenu === false) return;
-                renderItemCard(i);
-            });
-            
-            filterByCat(window.currentFilter, null);
-            runDataAudit();
-        }
-
-        // =========================================================
-        // تعديلات السحابة المباشرة
-        // =========================================================
-        function updateField(id, field, value) { dbCloud.ref('items/' + id).update({ [field]: value }); }
-        function updateItemCategoryInline(id, newCat) { dbCloud.ref('items/' + id).update({ cat: newCat }); }
-        function deleteItem(id) { if (confirm("حذف الصنف نهائياً من السحابة؟")) { dbCloud.ref('items/' + id).remove(); } }
+        function updateField(id, field, value) { dbCloud.ref('items/' + id).update({ [field]: value }).catch(()=>{}); }
+        function updateItemCategoryInline(id, newCat) { dbCloud.ref('items/' + id).update({ cat: newCat }).catch(()=>{}); }
+        function deleteItem(id) { if (confirm("حذف الصنف نهائياً؟")) { dbCloud.ref('items/' + id).remove().catch(()=>{}); } }
         
         function addNewCategory() { 
             const v = document.getElementById('newCatInput').value.trim(); 
             if(v && !categories.includes(v)) { 
                 const placeholderItem = { id: Date.now(), name: 'قسم تجريبي للربط', price: '0.00', cat: v, img: '', code: '000', unit: '', featured: false, isPlaceholder: true }; 
-                dbCloud.ref('items/' + placeholderItem.id).set(placeholderItem).then(() => { document.getElementById('newCatInput').value = ''; });
+                dbCloud.ref('items/' + placeholderItem.id).set(placeholderItem).then(() => { document.getElementById('newCatInput').value = ''; }).catch(()=>{});
             } else if (categories.includes(v)) { alert("هذا القسم موجود مسبقاً!"); } 
         }
         
         function addNewItemWithCategory() { 
             const cat = document.getElementById('mainCategory').value || "عام"; 
             const item = { id: Date.now(), name: 'صنف جديد', price: '0.00', cat: cat, img: '', code: '000', unit: '', selectedForMenu: true, driveLink: '' }; 
-            dbCloud.ref('items/' + item.id).set(item); 
+            dbCloud.ref('items/' + item.id).set(item).catch(()=>{}); 
         }
 
         function toggleSelectAllItems() { 
-            window.allSelectedState = !window.allSelectedState; 
-            let updates = {};
+            window.allSelectedState = !window.allSelectedState; let updates = {};
             allItemsGlobal.forEach(item => { if (!item.isPlaceholder) { updates[item.id + '/selectedForMenu'] = window.allSelectedState; } });
-            dbCloud.ref('items').update(updates);
+            dbCloud.ref('items').update(updates).catch(()=>{});
         }
 
         function updateItemSelection(id, isChecked) { updateField(id, 'selectedForMenu', isChecked); }
-        function updateImg(id, input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = e => { updateField(id, 'img', e.target.result); }; reader.readAsDataURL(input.files[0]); } }
         function toggleFeatured(id, btn) { const isFeatured = btn.style.filter === 'grayscale(1)'; updateField(id, 'featured', isFeatured); }
-
-        // =========================================================
-        // رسم واجهة الصنف
-        // =========================================================
         function selectAllText(el) { window.setTimeout(() => { const range = document.createRange(); range.selectNodeContents(el); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); }, 1); }
         
-        function renderItemCard(data) {
-            if(data.isPlaceholder) return;
-            const container = document.getElementById('main-container');
-            const card = document.createElement('div');
-            card.className = 'item-card ' + (data.featured ? 'is-featured' : '');
-            card.dataset.id = data.id; card.dataset.category = data.cat;
-            let catOptions = categories.map(c => `<option value="${c}" ${c === data.cat ? 'selected' : ''}>${c}</option>`).join('');
-            const isSelected = data.selectedForMenu !== false;
-            
-            const safeName = data.name.replace(/'/g, "&#39;").replace(/"/g, '&quot;'); 
-            const safeCode = (data.code || '000').replace(/'/g, "&#39;").replace(/"/g, '&quot;'); 
-            const safeLink = (data.driveLink || '').replace(/'/g, "&#39;").replace(/"/g, '&quot;'); 
-            const safePrice = (data.price || '0.00').replace(/'/g, "&#39;").replace(/"/g, '&quot;');
-
-            card.innerHTML = `
-                <div class="delete-item-btn admin-only" onclick="deleteItem(${data.id})" style="position:absolute; top:-10px; left:-10px; background:#dc3545; color:white; border-radius:50%; width:25px; height:25px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:bold; border:2px solid white; z-index:10;">×</div>
-                <div class="featured-badge">⭐ صنف مميز</div>
-                <div class="code-tag">
-                    <span class="admin-only" onclick="toggleFeatured(${data.id}, this); event.preventDefault();" style="cursor:pointer; margin-right:5px; filter:${data.featured ? 'none' : 'grayscale(1)'}">⭐</span>
-                    <span>رقم الصنف:</span>
-                    <div class="editable-code" contenteditable="true" onfocus="selectAllText(this)" onblur="updateField(${data.id}, 'code', this.innerText);">${data.code || '000'}</div>
-                </div>
-                <select class="cat-select-inline admin-only" onchange="updateItemCategoryInline(${data.id}, this.value)">${catOptions}</select>
-                <div class="header-row">
-                    <div class="name-display" contenteditable="true" onfocus="selectAllText(this)" onblur="updateField(${data.id}, 'name', this.innerText)">${data.name}</div>
-                    <div class="left-controls-group">
-                        <div class="price-container">
-                            <div class="price-display" contenteditable="true" onfocus="selectAllText(this)" onblur="updateField(${data.id}, 'price', this.innerText);">${data.price}</div>
-                            <span>د.ل</span>
-                        </div>
-                        <div class="unit-area">
-                            <span>الوحدة:</span>
-                            <div class="unit-display" contenteditable="true" onfocus="selectAllText(this)" onblur="updateField(${data.id}, 'unit', this.innerText)">${data.unit || ''}</div>
-                        </div>
-                        <div class="menu-export-checkbox-container admin-only">
-                            <input type="checkbox" id="chk-${data.id}" ${isSelected ? 'checked' : ''} onchange="updateItemSelection(${data.id}, this.checked)">
-                            <label for="chk-${data.id}">تصدير</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="img-preview-container">
-                    <label class="img-preview-label">
-                        <img src="${data.img || 'https://via.placeholder.com/350x220?text=إضافة+صورة'}" id="img-${data.id}">
-                        <input type="file" style="display:none" class="admin-only" onchange="updateImg(${data.id}, this)">
-                    </label>
-                </div>
-                <div class="admin-only" style="margin-top:8px;">
-                    <button class="gold-drive-btn" data-link="${data.driveLink || ''}" onclick="promptDriveLink(${data.id}, this)">
-                        ${data.driveLink ? '✅ تعديل رابط قوقل درايف' : '🔗 إضافة رابط قوقل درايف'}
-                    </button>
-                </div>
-                <button class="customer-only order-btn-card no-print" onclick="openContactModal('${safeName}', '${safeCode}', '${safeLink}', '${safePrice}')">🛒 اطلب الان عبر واتساب</button>
-            `;
-            container.prepend(card);
-            
-            const totalCountEl = document.getElementById('total-count');
-            if(totalCountEl) totalCountEl.innerText = document.querySelectorAll('#main-container .item-card').length;
-        }
-
-        // =========================================================
-        // الفلترة والفحص
-        // =========================================================
         function filterByCat(cat, btn) {
             document.querySelectorAll('.issue-btn').forEach(b => b.classList.remove('active')); window.currentIssueFilter = 'none';
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             if(btn) { btn.classList.add('active'); } else { document.querySelectorAll('.filter-btn').forEach(b => { const cleanText = b.innerText.replace(/[^\u0600-\u06FFa-zA-Z0-9 ]/g, '').trim(); if(cleanText === cat || (cat === 'all' && cleanText === 'الكل')) b.classList.add('active'); }); }
-            window.currentFilter = cat; filterItems();
+            window.currentFilter = cat; queueRender();
         }
 
         function filterByIssue(issueType, btn) {
             document.querySelectorAll('.issue-btn').forEach(b => b.classList.remove('active'));
-            if (window.currentIssueFilter === issueType) { window.currentIssueFilter = 'none'; filterByCat('all', document.querySelector('.filter-btn')); } else { btn.classList.add('active'); window.currentIssueFilter = issueType; filterItems(); }
+            if (window.currentIssueFilter === issueType) { window.currentIssueFilter = 'none'; filterByCat('all', document.querySelector('.filter-btn')); } else { btn.classList.add('active'); window.currentIssueFilter = issueType; queueRender(); }
         }
 
-        function filterItems() {
-            const query = document.getElementById('globalSearch').value.toLowerCase(); const cat = window.currentFilter || 'all'; const issue = window.currentIssueFilter || 'none'; const cards = document.querySelectorAll('.item-card'); let activeCounter = 0;
-            const isAdmin = !document.body.classList.contains('admin-locked');
-            
-            cards.forEach(card => {
-                const nameDisplay = card.querySelector('.name-display'); const codeDisplay = card.querySelector('.editable-code'); const priceDisplay = card.querySelector('.price-display'); const imgContainer = card.querySelector('.img-preview-container'); const imgEl = imgContainer.querySelector('img');
-                const linkBtn = card.querySelector('.gold-drive-btn'); const driveLink = linkBtn ? (linkBtn.getAttribute('data-link') || '').trim() : '';
-
-                const name = nameDisplay.innerText.toLowerCase(); const code = codeDisplay.innerText.toLowerCase(); const price = priceDisplay.innerText.trim(); const imgSrc = imgEl ? imgEl.src : ''; const itemCat = card.dataset.category;
-                const matchSearch = name.includes(query) || code.includes(query); const matchCat = (cat === 'all' || itemCat === cat);
-                let matchIssue = true;
-                const isNoPrice = (price === '0.00' || price === '0' || price === ''); const isNoCode = (code === '000' || code === '00' || code === '0' || code === ''); const isNoImg = (imgSrc.includes('placeholder.com') || imgSrc === ''); const isNoName = (name.trim() === '' || name === 'صنف جديد'); const isNoLink = (driveLink === '');
-
-                if (issue === 'no-price') { matchIssue = isNoPrice; } else if (issue === 'no-code') { matchIssue = isNoCode; } else if (issue === 'no-img') { matchIssue = isNoImg; } else if (issue === 'no-name') { matchIssue = isNoName; } else if (issue === 'no-link') { matchIssue = isNoLink; } else if (issue === 'all-issues') { matchIssue = (isNoPrice || isNoCode || isNoImg || isNoName || isNoLink); }
-
-                if (issue === 'all-issues' && matchIssue && isAdmin) { 
-                    priceDisplay.style.backgroundColor = isNoPrice ? 'rgba(255, 0, 0, 0.15)' : 'transparent'; codeDisplay.style.backgroundColor = isNoCode ? 'rgba(255, 0, 0, 0.15)' : 'transparent'; nameDisplay.style.backgroundColor = isNoName ? 'rgba(255, 0, 0, 0.15)' : 'transparent'; imgContainer.style.border = isNoImg ? '2px solid red' : '1px dashed #ddd'; if(linkBtn) linkBtn.style.boxShadow = isNoLink ? '0 0 8px red' : 'none'; 
-                } else { 
-                    priceDisplay.style.backgroundColor = 'transparent'; codeDisplay.style.backgroundColor = 'transparent'; nameDisplay.style.backgroundColor = 'transparent'; imgContainer.style.border = '1px dashed #ddd'; if(linkBtn) linkBtn.style.boxShadow = 'none'; 
-                }
-
-                if(matchSearch && matchCat && matchIssue) { card.style.display = 'flex'; activeCounter++; } else { card.style.display = 'none'; }
-            });
-            const totalCountEl = document.getElementById('total-count');
-            if(totalCountEl) totalCountEl.innerText = activeCounter;
-        }
+        function filterItems() { queueRender(); }
 
         function promptDriveLink(id, btn) {
             let currentLink = btn.getAttribute('data-link'); let newLink = prompt("الرجاء إدخال رابط قوقل درايف:", currentLink);
@@ -634,31 +762,37 @@
         }
 
         // =========================================================
-        // دوال استيراد السجلات للسحابة
+        // التصدير السحابي المباشر والأزرار الجديدة
         // =========================================================
-        function processRecoveryFile(input) {
-            const file = input.files[0];
-            if (!file) return;
-            alert("جاري قراءة الأصناف من الملف ورفعها للسحابة.. الرجاء الانتظار.");
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const htmlContent = e.target.result; const parser = new DOMParser(); const doc = parser.parseFromString(htmlContent, 'text/html'); const oldCards = doc.querySelectorAll('.item-card');
-                if (oldCards.length === 0) { alert("⚠️ لم يتمكن النظام من قراءة الأصناف."); return; }
-                let counter = 0; let updates = {};
-                oldCards.forEach(card => {
-                    const nameDisplayEl = card.querySelector('.name-display'); const priceDisplayEl = card.querySelector('.price-display'); const codeDisplayEl = card.querySelector('.editable-code'); const unitDisplayEl = card.querySelector('.unit-display');
-                    const name = nameDisplayEl ? nameDisplayEl.innerText.trim() : 'صنف غير مسمى'; const price = priceDisplayEl ? priceDisplayEl.innerText.trim() : '0.00'; const code = codeDisplayEl ? codeDisplayEl.innerText.trim() : '000'; const unit = unitDisplayEl ? unitDisplayEl.innerText.trim() : 'كيلو';
-                    const cat = card.getAttribute('data-category') || card.dataset.category || 'عام'; const imgEl = card.querySelector('img'); const img = imgEl ? imgEl.src : ''; const featured = card.classList.contains('is-featured');
-                    const linkBtn = card.querySelector('.gold-drive-btn'); const driveLink = linkBtn ? linkBtn.getAttribute('data-link').trim() : '';
-                    const itemId = Date.now() + counter;
-                    updates[itemId] = { id: itemId, name: name, price: price, code: code, unit: unit, cat: cat, img: img, featured: featured, selectedForMenu: true, driveLink: driveLink };
-                    counter++;
-                });
-                dbCloud.ref('items').update(updates).then(() => { alert("✅ تم استرجاع (" + counter + ") صنفاً بنجاح ورفعها للسحابة!"); });
-            };
-            reader.readAsText(file, "UTF-8");
+        function exportToPDF() { window.print(); }
+
+        // الدالة المخصصة لتصدير إكسل والصور لقوقل درايف بالتسلسل المطلوب
+        async function exportForGoogleDriveWorkflow() {
+            const exportItems = allItemsGlobal.filter(i => !i.isPlaceholder && i.img && i.img.startsWith('data:image'));
+            if (exportItems.length === 0) { alert("⚠️ لا توجد أصناف تحتوي على صور لتصديرها."); return; }
+            alert("جاري تجهيز الإكسل والصور المتسلسلة...");
+            const zip = new JSZip();
+            const imageFolder = zip.folder("صور_قوقل_درايف");
+            
+            let excelData = [ ["الكود", "اسم الصنف", "السعر", "رقم الصورة", "القسم", "الرابط"] ];
+            
+            let counter = 1;
+            exportItems.sort((a,b) => a.id - b.id).forEach(item => {
+                const seqNum = counter++;
+                const paddedNum = String(seqNum).padStart(3, '0');
+                const imgName = `${paddedNum}.jpg`;
+                
+                excelData.push([ item.code || '000', item.name, parseFloat(item.price) || 0.00, seqNum, item.cat || 'عام', item.driveLink || '' ]);
+                const base64Data = item.img.split(',')[1];
+                imageFolder.file(imgName, base64Data, {base64: true});
+            });
+            
+            const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(excelData); XLSX.utils.book_append_sheet(wb, ws, "البيانات التسلسلية"); const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            zip.file("Exported_Faidy_Data.xlsx", excelBuffer);
+            zip.generateAsync({type: "blob"}).then(content => { saveAs(content, "تجهيز_قوقل_درايف.zip"); alert("✅ تم بنجاح! الملف المضغوط يحتوي على الإكسل وصور مرقمة بالتسلسل."); });
         }
 
+        // استيراد الروابط المتوافق مع الإكسل الجديد (بناءً على الكود والرابط)
         function processLinksExcel(input) {
             const file = input.files[0];
             if (!file) return;
@@ -668,8 +802,10 @@
                 try {
                     const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, {type: 'array'}); const worksheet = workbook.Sheets[workbook.SheetNames[0]]; const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
                     if(json.length === 0) { alert("⚠️ الملف فارغ!"); input.value = ''; return; }
-                    const keys = Object.keys(json[0]); const codeKey = keys.find(k => k.includes("كود") || k.includes("الكود") || k.toLowerCase() === "code"); const linkKey = keys.find(k => k.includes("رابط") || k.includes("الرابط") || k.toLowerCase().includes("link"));
-                    if (!codeKey || !linkKey) { alert("⚠️ خطأ في الأعمدة."); input.value = ''; return; }
+                    const keys = Object.keys(json[0]); 
+                    const codeKey = keys.find(k => k.trim() === "الكود" || k.includes("كود")); 
+                    const linkKey = keys.find(k => k.trim() === "الرابط" || k.includes("رابط"));
+                    if (!codeKey || !linkKey) { alert("⚠️ خطأ في الأعمدة. تأكد من وجود عمود 'الكود' وعمود 'الرابط'."); input.value = ''; return; }
 
                     let updatedCount = 0; let updates = {};
                     json.forEach(row => {
@@ -695,16 +831,11 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // =========================================================
-        // التصدير السحابي المباشر
-        // =========================================================
-        function exportToPDF() { window.print(); }
-
         async function exportAllImagesFlat() { 
             alert("جاري التجميع المباشر من السحابة..."); const zip = new JSZip(); let hasImages = false; 
             allItemsGlobal.forEach(i => { 
                 if(i.img && !i.isPlaceholder && i.img.startsWith('data:image')) { 
-                    const base64Data = i.img.split(',')[1]; const cleanName = i.name.replace(/[\\/:*?"<>|]/g, "").trim(); const cleanCode = (i.code || '000').replace(/[\\/:*?"<>|]/g, "").trim(); const cleanPrice = (i.price || '0.00').replace(/[\\/:*?"<>|]/g, "").trim(); 
+                    const base64Data = i.img.split(',')[1]; const cleanName = (i.name || '').toString().replace(/[\\/:*?"<>|]/g, "").trim(); const cleanCode = (i.code || '000').toString().replace(/[\\/:*?"<>|]/g, "").trim(); const cleanPrice = (i.price || '0.00').toString().replace(/[\\/:*?"<>|]/g, "").trim(); 
                     zip.file(`${cleanName} | رقم ${cleanCode} | ${cleanPrice} د.ل.jpg`, base64Data, {base64: true}); hasImages = true; 
                 } 
             }); 
@@ -717,7 +848,7 @@
                 const cleanCatFolder = catName.replace(/[\\/:*?"<>|]/g, "").trim(); const catItems = allItemsGlobal.filter(i => (i.cat || 'عام') === catName); 
                 catItems.forEach(i => { 
                     if(i.img && !i.isPlaceholder && i.img.startsWith('data:image')) { 
-                        const base64Data = i.img.split(',')[1]; const cleanName = i.name.replace(/[\\/:*?"<>|]/g, "").trim(); const cleanCode = (i.code || '000').replace(/[\\/:*?"<>|]/g, "").trim(); 
+                        const base64Data = i.img.split(',')[1]; const cleanName = (i.name || '').toString().replace(/[\\/:*?"<>|]/g, "").trim(); const cleanCode = (i.code || '000').toString().replace(/[\\/:*?"<>|]/g, "").trim(); 
                         zip.file(cleanCatFolder + "/" + `${cleanName} | رقم ${cleanCode}.jpg`, base64Data, {base64: true}); hasImages = true; 
                     } 
                 }); 
@@ -730,16 +861,15 @@
             const exportItems = allItemsGlobal.filter(i => !i.isPlaceholder); if (exportItems.length === 0) return; 
             let excelData = [ ["كود", "اسم", "السعر", "الوحدة", "القسم", "رابط محلي"] ]; 
             exportItems.forEach(item => { 
-                const cleanName = item.name.replace(/[\\/:*?"<>|]/g, "").trim(); const cleanCode = (item.code || '000').replace(/[\\/:*?"<>|]/g, "").trim(); const imageFileName = `${cleanName}_رقم_${cleanCode}.jpg`; let excelLinkFormula = "لا توجد صورة"; 
+                const cleanName = (item.name || '').toString().replace(/[\\/:*?"<>|]/g, "").trim(); const cleanCode = (item.code || '000').toString().replace(/[\\/:*?"<>|]/g, "").trim(); const imageFileName = `${cleanName}_رقم_${cleanCode}.jpg`; let excelLinkFormula = "لا توجد صورة"; 
                 if (item.img && item.img.startsWith('data:image')) { const base64Data = item.img.split(',')[1]; imageFolder.file(imageFileName, base64Data, {base64: true}); excelLinkFormula = { f: `HYPERLINK("Faidy_Images/${imageFileName}", "👁️ فتح صورة الصنف")` }; } 
-                excelData.push([ item.code || '000', item.name, parseFloat(item.price) || 0.00, item.unit || 'كيلو', item.cat || 'عام', excelLinkFormula ]); 
+                excelData.push([ item.code || '000', item.name || '', parseFloat(item.price) || 0.00, item.unit || 'كيلو', item.cat || 'عام', excelLinkFormula ]); 
             }); 
             const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(excelData); XLSX.utils.book_append_sheet(wb, ws, "البيانات"); const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }); zip.file("البيانات.xlsx", excelBuffer); 
             zip.generateAsync({type: "blob"}).then(content => { saveAs(content, "إكسل_الفايدي.zip"); }); 
         }
 
         function exportWordWithLocalImages() {
-            if (!dbCloud) { alert("خطأ في الاتصال بالسحابة!"); return; }
             alert("جاري إنشاء التقرير (وورد + صور) وضغط الملفات.. يرجى الانتظار."); const zip = new JSZip(); const imageFolder = zip.folder("Faidy_Images");
             const exportItems = allItemsGlobal.filter(i => !i.isPlaceholder && i.selectedForMenu !== false);
             if (exportItems.length === 0) { alert("⚠️ لا توجد أصناف حالية لتصديرها."); return; }
@@ -750,9 +880,9 @@
                 if(catItems.length > 0) {
                     tableRows += `<tr><td colspan="5" style="background-color: #EEDC82; color: #4A0000; font-weight: bold; text-align: center; padding: 10px; font-size: 16px;">قسم: ${catName}</td></tr>`;
                     catItems.forEach(item => {
-                        const cleanName = item.name.replace(/[\\/:*?"<>|]/g, "").trim(); const cleanCode = (item.code || '000').replace(/[\\/:*?"<>|]/g, "").trim(); const imageFileName = `${cleanName}_رقم_${cleanCode}.jpg`; let imageLinkHtml = "<span style='color:#777;'>لا توجد صورة</span>";
+                        const cleanName = (item.name || '').toString().replace(/[\\/:*?"<>|]/g, "").trim(); const cleanCode = (item.code || '000').toString().replace(/[\\/:*?"<>|]/g, "").trim(); const imageFileName = `${cleanName}_رقم_${cleanCode}.jpg`; let imageLinkHtml = "<span style='color:#777;'>لا توجد صورة</span>";
                         if (item.img && item.img.startsWith('data:image')) { const base64Data = item.img.split(',')[1]; imageFolder.file(imageFileName, base64Data, {base64: true}); imageLinkHtml = `<a href="Faidy_Images/${imageFileName}" style="color: #0000FF; text-decoration: underline;">👁️ فتح الصورة</a>`; }
-                        tableRows += `<tr> <td style="border: 1px solid #D4AF37; padding: 5px; text-align: center;">${item.code || '000'}</td> <td style="border: 1px solid #D4AF37; padding: 5px; font-weight: bold; text-align: right;">${item.name}</td> <td style="border: 1px solid #D4AF37; padding: 5px; color: #800000; direction: ltr; text-align: center;">${item.price || '0.00'}</td> <td style="border: 1px solid #D4AF37; padding: 5px; text-align: center;">${item.unit || ''}</td> <td style="border: 1px solid #D4AF37; padding: 5px; text-align: center;">${imageLinkHtml}</td> </tr>`;
+                        tableRows += `<tr> <td style="border: 1px solid #D4AF37; padding: 5px; text-align: center;">${item.code || '000'}</td> <td style="border: 1px solid #D4AF37; padding: 5px; font-weight: bold; text-align: right;">${item.name || ''}</td> <td style="border: 1px solid #D4AF37; padding: 5px; color: #800000; direction: ltr; text-align: center;">${item.price || '0.00'}</td> <td style="border: 1px solid #D4AF37; padding: 5px; text-align: center;">${item.unit || ''}</td> <td style="border: 1px solid #D4AF37; padding: 5px; text-align: center;">${imageLinkHtml}</td> </tr>`;
                     });
                 }
             });
@@ -764,8 +894,92 @@
         function exportDataToSpeedlyXLSX() { 
             const exportItems = allItemsGlobal.filter(i => !i.isPlaceholder); 
             let excelData = [ ["كود", "اسم", "السعر", "القسم", "رابط"] ]; 
-            exportItems.forEach(item => { excelData.push([ item.code || '000', item.name, parseFloat(item.price) || 0.00, item.cat || 'عام', item.driveLink || '' ]); }); 
+            exportItems.forEach(item => { excelData.push([ item.code || '000', item.name || '', parseFloat(item.price) || 0.00, item.cat || 'عام', item.driveLink || '' ]); }); 
             const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(excelData); XLSX.utils.book_append_sheet(wb, ws, "سبيدلي"); XLSX.writeFile(wb, "سبيدلي.xlsx"); 
+        }
+
+        // =========================================================
+        // تصدير المنيو المستقل للزبائن (HTML Export) - مدعوم بالـ Lazy Loading
+        // =========================================================
+        function exportStandaloneMenu() {
+            if(allItemsGlobal.length === 0) { alert("⚠️ لا توجد أصناف لتصديرها."); return; }
+            alert("جاري تجهيز المنيو المستقل للزبائن...");
+            
+            let branchesSelectHTML = '';
+            window.globalBranches.forEach(b => { 
+                let p = b.phone.replace(/[^\d+]/g, ''); if (p.startsWith('0')) p = '218' + p.substring(1); 
+                branchesSelectHTML += `<option value="${p}">فرع ${b.name} (${b.phone})</option>`; 
+            });
+
+            let cardsHTML = '';
+            allItemsGlobal.sort((a,b) => a.id - b.id).forEach(item => {
+                if(item.selectedForMenu === false) return;
+                const safeName = (item.name || '').toString().replace(/'/g, "&#39;").replace(/"/g, '&quot;'); 
+                const safeCode = (item.code || '000').toString().replace(/'/g, "&#39;").replace(/"/g, '&quot;'); 
+                const safeLink = (item.driveLink || '').toString().replace(/'/g, "&#39;").replace(/"/g, '&quot;'); 
+                const safePrice = (item.price || '0.00').toString().replace(/'/g, "&#39;").replace(/"/g, '&quot;');
+
+                cardsHTML += `
+                <div style="background:white; padding:12px; border-radius:12px; text-align:center; box-shadow:0 3px 6px rgba(0,0,0,0.1); border-bottom:4px solid #800000; break-inside: avoid;">
+                    <div style="background:#333; color:#fff; padding:2px 12px; border-radius:4px; font-size:10px; font-weight:bold; display:inline-block; margin-bottom:10px;">رقم الصنف: ${safeCode}</div>
+                    <img src="${item.img || ''}" loading="lazy" style="width:100%; height:200px; object-fit:contain; margin-bottom:10px; background:#f9f9f9; border-radius:8px; border:1px dashed #ddd;">
+                    <h3 style="margin:0 0 5px 0; color:#800000; font-size:16px;">${item.name || ''}</h3>
+                    <div style="color:#d49500; font-weight:bold; font-size:16px; margin-bottom:10px;">${item.price || '0.00'} د.ل</div>
+                    <button style="background:#28a745; color:white; border:1px solid #218838; padding:8px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="openModal('${safeName}', '${safeCode}', '${safeLink}', '${safePrice}')">🛒 اطلب الان عبر واتساب</button>
+                </div>`;
+            });
+
+            const fullHTML = `
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>منيو حلواني أبناء الفايدي</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 15px; }
+                    .header { background: #EEDC82; color: #4A0000; text-align: center; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 900; font-size: 20px; border-bottom: 3px solid #D4AF37; }
+                    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+                    #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:100; }
+                    .modal-box { background:#fff; padding:20px; border-radius:12px; text-align:center; width:85%; max-width:320px; border:3px solid #D4AF37; }
+                    select { width:100%; padding:8px; margin-bottom:15px; border-radius:8px; border:1px solid #D4AF37; font-weight:bold; text-align:center; color:#800000; }
+                    button { width:100%; padding:10px; margin-bottom:10px; border-radius:8px; font-weight:bold; border:none; cursor:pointer; color:white; }
+                </style>
+            </head>
+            <body>
+                <div class="header">حلواني أبناء الفايدي 1989<br><span style="font-size:14px; color:#333;">(النسخة المستقلة)</span></div>
+                
+                <div id="modal">
+                    <div class="modal-box">
+                        <div style="color:#800000; font-weight:bold; margin-bottom:10px;">تواصل معنا للطلب</div>
+                        <div id="m-desc" style="font-size:12px; margin-bottom:15px;"></div>
+                        <select id="b-sel">${branchesSelectHTML}</select>
+                        <button style="background:#25D366;" onclick="sWA()">💬 إرسال عبر واتساب</button>
+                        <button style="background:#dc3545;" onclick="document.getElementById('modal').style.display='none'">إغلاق</button>
+                    </div>
+                </div>
+
+                <div class="grid">${cardsHTML}</div>
+
+                <script>
+                    let cName="", cCode="", cLink="", cPrice="";
+                    function openModal(n,c,l,p) { cName=n; cCode=c; cLink=l; cPrice=p; document.getElementById('m-desc').innerText="الصنف: "+n+" | السعر: "+p; document.getElementById('modal').style.display='flex'; }
+                    function sWA() { 
+                        let num = document.getElementById('b-sel').value;
+                        let msg = "مرحباً حلواني أبناء الفايدي، أود طلب الصنف: *" + cName + "*\\nرقم الصنف: " + cCode + " | السعر: " + cPrice + " د.ل\\n";
+                        if(cLink) { msg += "-----------------------------------\\n❖ [ 📸 رابط الصورة المعتمدة في النظام ]:\\n" + cLink; }
+                        window.open("https://wa.me/" + num + "?text=" + encodeURIComponent(msg), "_blank");
+                        document.getElementById('modal').style.display='none';
+                    }
+                <\/script>
+            </body>
+            </html>`;
+
+            const blob = new Blob([fullHTML], { type: "text/html;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "منيو_الفايدي_لزبائن.html";
+            link.click();
         }
     </script>
 </body>
