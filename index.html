@@ -20,7 +20,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
         body { font-family: 'Cairo', sans-serif; background-color: #f4f4f4; padding: 5px 15px; margin: 0; scroll-behavior: smooth; }
         
-        /* إعدادات وضع القفل (واجهة الزبون) ووضع الإدارة */
         body.admin-locked .admin-only { display: none !important; }
         body.admin-locked [contenteditable] { pointer-events: none; border: none !important; outline: none !important; }
         body:not(.admin-locked) .customer-only { display: none !important; }
@@ -201,6 +200,7 @@
                     <b>الفروع:</b>
                     <input type="text" id="bNameInp" placeholder="الاسم...">
                     <input type="text" id="bPhoneInp" placeholder="الهاتف...">
+                    <input type="text" id="bPassInp" placeholder="رقم سري للفرع..." style="width:75px;" title="الرقم السري الخاص بهذا الفرع فقط">
                     <button class="btn-panel-save" onclick="addNewBranch()" style="background:#28a745">➕</button>
                 </div>
                 
@@ -224,6 +224,7 @@
                 <button class="btn-zip" onclick="exportAllImagesFlat()" style="background:#d35400;">📦 كل الصور</button>
                 <button class="btn-zip" onclick="exportAllImages()" style="background:#ff9800;">📂 صور مقسمة</button>
                 <button class="btn-speedly" onclick="exportExcelWithLocalImages()" style="background:#157347; border: 1px solid #D4AF37;">📊 إكسل متكامل</button>
+                <button class="btn-word" onclick="exportWordWithLocalImages()">📝 وورد متكامل</button>
                 <button class="btn-pdf" onclick="exportToPDF()">📄 طباعة PDF</button>
                 <button class="btn-speedly" onclick="exportDataToSpeedlyXLSX()">📥 إكسل سبيدلي</button>
             </div>
@@ -257,6 +258,7 @@
         window.currentFilter = 'all';
         window.currentIssueFilter = 'none';
         window.allSelectedState = true; 
+        window.globalBranches = [];
         
         window.contactItemName = ""; 
         window.contactItemCode = ""; 
@@ -264,15 +266,101 @@
         window.contactItemPrice = "";
         
         document.addEventListener("DOMContentLoaded", function() {
-            initBranchesStorage(); 
-            loadMainLogoFromStorage(); 
-            loadBranchesUnifiedImageFromStorage();
             loadHiddenCategoriesStorage(); 
-            loadCloudData(); // التحميل المباشر من السحابة
+            loadCloudData(); // كل شيء الآن يتم تحميله من السحابة مباشرة
         });
 
         // =========================================================
-        // نظام الدخول المخفي للإدارة (كلمة المرور الافتراضية 2026)
+        // التزامن الحي مع السحابة (Real-time Cloud Sync)
+        // =========================================================
+        function loadCloudData() {
+            // سحب الأصناف
+            dbCloud.ref('items').on('value', (snapshot) => {
+                const data = snapshot.val();
+                allItemsGlobal = data ? Object.values(data) : [];
+                renderItemsUI();
+            });
+
+            // سحب الإعدادات (الفروع، الشعار، وصورة الفروع)
+            dbCloud.ref('settings').on('value', (snapshot) => {
+                const settings = snapshot.val() || {};
+                
+                if (settings.logo) { document.getElementById("faidyMainLogo").src = settings.logo; }
+                
+                if (settings.branchImage) { 
+                    const preview = document.getElementById("branchesUnifiedImgPreview"); 
+                    const headerImg = document.getElementById("main-header-branches-img"); 
+                    if(preview) { preview.src = settings.branchImage; preview.style.display = "inline-block"; } 
+                    if(headerImg) { headerImg.src = settings.branchImage; } 
+                }
+                
+                if (settings.branches) {
+                    window.globalBranches = Object.values(settings.branches);
+                } else {
+                    window.globalBranches = [ { id: 1, name: "الرئيسي", phone: "091-XXXXXXX", pass: "2026" } ];
+                }
+                renderBranches();
+            });
+        }
+
+        // =========================================================
+        // دوال الإعدادات والشعارات والفروع (حفظ سحابي)
+        // =========================================================
+        function uploadMainLogo(input) { 
+            if (input.files && input.files[0]) { 
+                const reader = new FileReader(); 
+                reader.onload = function(e) { dbCloud.ref('settings/logo').set(e.target.result); alert("✅ تم رفع الشعار للسحابة بنجاح!"); }; 
+                reader.readAsDataURL(input.files[0]); 
+            } 
+        }
+
+        function uploadBranchesUnifiedImage(input) { 
+            if (input.files && input.files[0]) { 
+                const reader = new FileReader(); 
+                reader.onload = function(e) { dbCloud.ref('settings/branchImage').set(e.target.result); alert("✅ تم رفع صورة الفروع للسحابة بنجاح!"); }; 
+                reader.readAsDataURL(input.files[0]); 
+            } 
+        }
+        
+        function renderBranches() { 
+            const container = document.getElementById('branchesContainer'); if(!container) return; 
+            const loginBoxHTML = document.getElementById('secretLoginBox').outerHTML; 
+            container.innerHTML = loginBoxHTML; 
+            window.globalBranches.forEach(b => { 
+                const card = document.createElement('div'); card.className = 'branch-card'; 
+                card.innerHTML = `<div class="branch-info-box"> <span style="color:#800000; font-weight:900; font-size:12px;">فرع ${b.name}</span> <span style="color:#333; font-weight:700; font-size:11px; direction:ltr;">${b.phone}</span> </div> <div style="display:flex; align-items:center; gap:5px;"> <a href="tel:${b.phone.replace(/[^\d]/g, '')}" class="booking-badge customer-only">📞 اتصال</a> <div class="b-edit-btn admin-only" onclick="editBranch(${b.id})" title="تعديل">✏️</div> <div class="b-del-x admin-only" onclick="deleteBranch(${b.id})" title="حذف">×</div> </div>`; 
+                container.appendChild(card); 
+            }); 
+            updateCustomerBranchesModal();
+        }
+
+        function addNewBranch() { 
+            const name = document.getElementById('bNameInp').value.trim(); 
+            const phone = document.getElementById('bPhoneInp').value.trim(); 
+            const pass = document.getElementById('bPassInp').value.trim() || "0000";
+            if (name && phone) { 
+                const newBranch = { id: Date.now(), name: name, phone: phone, pass: pass };
+                dbCloud.ref('settings/branches/' + newBranch.id).set(newBranch);
+                document.getElementById('bNameInp').value = ''; document.getElementById('bPhoneInp').value = ''; document.getElementById('bPassInp').value = '';
+            } 
+        }
+
+        function editBranch(id) { 
+            let branch = window.globalBranches.find(b => b.id === id); 
+            if (branch) { 
+                let newName = prompt("تعديل اسم الفرع:", branch.name); 
+                let newPhone = prompt("تعديل رقم الهاتف:", branch.phone); 
+                let newPass = prompt("تعديل الرقم السري لهذا الفرع:", branch.pass || "0000");
+                if (newName && newPhone && newPass) { 
+                    dbCloud.ref('settings/branches/' + id).update({ name: newName.trim(), phone: newPhone.trim(), pass: newPass.trim() });
+                } 
+            } 
+        }
+        
+        function deleteBranch(id) { if (confirm("حذف هذا الفرع؟")) { dbCloud.ref('settings/branches/' + id).remove(); } }
+
+        // =========================================================
+        // نظام الدخول متعدد كلمات المرور للفروع 
         // =========================================================
         function toggleLoginBox() {
             const box = document.getElementById('secretLoginBox');
@@ -281,11 +369,19 @@
 
         function checkPassword() {
             const pass = document.getElementById('adminPassword').value;
-            if(pass === "2026") {
+            let isValid = false;
+            
+            if(pass === "2026") isValid = true; 
+            
+            window.globalBranches.forEach(b => { 
+                if(b.pass && b.pass === pass) isValid = true; 
+            });
+
+            if(isValid) {
                 document.body.classList.remove('admin-locked');
                 document.getElementById('secretLoginBox').classList.remove('show');
-                alert("✅ تم تفعيل اللوحة السحابية. أي تعديل ستقوم به سيتم حفظه فوراً!");
-                renderItemsUI(); // إعادة رسم الشاشة لإظهار أزرار الإدارة
+                alert("✅ تم تفعيل اللوحة السحابية بنجاح.");
+                renderItemsUI(); 
             } else {
                 alert("❌ الرقم السري غير صحيح!");
             }
@@ -296,12 +392,10 @@
         // دوال الزبون (واتساب والاتصال)
         // =========================================================
         function updateCustomerBranchesModal() {
-            let branchesStr = localStorage.getItem("faidy_branches_data");
             let selectEl = document.getElementById("branch-select");
             selectEl.innerHTML = "";
-            if (branchesStr) { 
-                const branchesList = JSON.parse(branchesStr); 
-                branchesList.forEach(b => { 
+            if (window.globalBranches.length > 0) { 
+                window.globalBranches.forEach(b => { 
                     let p = b.phone.replace(/[^\d+]/g, ''); 
                     if (p.startsWith('0')) p = '218' + p.substring(1); 
                     selectEl.innerHTML += '<option value="' + p + '">فرع ' + b.name + ' (' + b.phone + ')</option>'; 
@@ -320,9 +414,7 @@
             document.getElementById("contact-modal").style.display = "flex"; 
         } 
         
-        function closeContactModal() { 
-            document.getElementById("contact-modal").style.display = "none"; 
-        } 
+        function closeContactModal() { document.getElementById("contact-modal").style.display = "none"; } 
         
         function sendWA() { 
             const p = document.getElementById("branch-select").value; 
@@ -333,49 +425,11 @@
             closeContactModal(); 
         } 
         
-        function makeCall() { 
-            const p = document.getElementById("branch-select").value; 
-            window.location.href = "tel:+" + p; 
-            closeContactModal(); 
-        }
+        function makeCall() { const p = document.getElementById("branch-select").value; window.location.href = "tel:+" + p; closeContactModal(); }
 
         // =========================================================
-        // دوال الإعدادات والشعارات والفروع (تخزين محلي مؤقتاً)
+        // واجهة الأصناف
         // =========================================================
-        function loadMainLogoFromStorage() { const savedLogo = localStorage.getItem("faidy_corporate_logo"); if (savedLogo) { document.getElementById("faidyMainLogo").src = savedLogo; } }
-        function uploadMainLogo(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = function(e) { const base64Data = e.target.result; localStorage.setItem("faidy_corporate_logo", base64Data); document.getElementById("faidyMainLogo").src = base64Data; }; reader.readAsDataURL(input.files[0]); } }
-        function loadBranchesUnifiedImageFromStorage() { const savedImg = localStorage.getItem("faidy_branches_unified_img"); const preview = document.getElementById("branchesUnifiedImgPreview"); const headerImg = document.getElementById("main-header-branches-img"); if (savedImg) { if(preview) { preview.src = savedImg; preview.style.display = "inline-block"; } if(headerImg) { headerImg.src = savedImg; } } }
-        function uploadBranchesUnifiedImage(input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = function(e) { const base64Data = e.target.result; localStorage.setItem("faidy_branches_unified_img", base64Data); const preview = document.getElementById("branchesUnifiedImgPreview"); const headerImg = document.getElementById("main-header-branches-img"); if(preview) { preview.src = base64Data; preview.style.display = "inline-block"; } if(headerImg) { headerImg.src = base64Data; } }; reader.readAsDataURL(input.files[0]); } }
-        
-        function initBranchesStorage() { let saved = localStorage.getItem("faidy_branches_data"); if (!saved) { let defaults = [ { id: 1, name: "الرئيسي", phone: "091-XXXXXXX" } ]; localStorage.setItem("faidy_branches_data", JSON.stringify(defaults)); } renderBranches(); }
-        function renderBranches() { 
-            const container = document.getElementById('branchesContainer'); if(!container) return; 
-            const loginBoxHTML = document.getElementById('secretLoginBox').outerHTML; 
-            container.innerHTML = loginBoxHTML; 
-            let branches = JSON.parse(localStorage.getItem("faidy_branches_data")) || []; 
-            branches.forEach(b => { 
-                const card = document.createElement('div'); card.className = 'branch-card'; 
-                card.innerHTML = `<div class="branch-info-box"> <span style="color:#800000; font-weight:900; font-size:12px;">فرع ${b.name}</span> <span style="color:#333; font-weight:700; font-size:11px; direction:ltr;">${b.phone}</span> </div> <div style="display:flex; align-items:center; gap:5px;"> <a href="tel:${b.phone.replace(/[^\d]/g, '')}" class="booking-badge customer-only">📞 اتصال</a> <div class="b-edit-btn admin-only" onclick="editBranch(${b.id})" title="تعديل">✏️</div> <div class="b-del-x admin-only" onclick="deleteBranch(${b.id})" title="حذف">×</div> </div>`; 
-                container.appendChild(card); 
-            }); 
-            updateCustomerBranchesModal();
-        }
-        function addNewBranch() { const name = document.getElementById('bNameInp').value.trim(); const phone = document.getElementById('bPhoneInp').value.trim(); if (name && phone) { let branches = JSON.parse(localStorage.getItem("faidy_branches_data")) || []; branches.push({ id: Date.now(), name: name, phone: phone }); localStorage.setItem("faidy_branches_data", JSON.stringify(branches)); document.getElementById('bNameInp').value = ''; document.getElementById('bPhoneInp').value = ''; renderBranches(); } }
-        function editBranch(id) { let branches = JSON.parse(localStorage.getItem("faidy_branches_data")) || []; let branchIndex = branches.findIndex(b => b.id === id); if (branchIndex !== -1) { let newName = prompt("تعديل اسم الفرع:", branches[branchIndex].name); let newPhone = prompt("تعديل رقم الهاتف:", branches[branchIndex].phone); if (newName && newPhone) { branches[branchIndex].name = newName.trim(); branches[branchIndex].phone = newPhone.trim(); localStorage.setItem("faidy_branches_data", JSON.stringify(branches)); renderBranches(); } } }
-        function deleteBranch(id) { if (confirm("حذف هذا الفرع?")) { let branches = JSON.parse(localStorage.getItem("faidy_branches_data")) || []; branches = branches.filter(b => b.id !== id); localStorage.setItem("faidy_branches_data", JSON.stringify(branches)); renderBranches(); } }
-
-        // =========================================================
-        // التزامن الحي مع السحابة (Real-time Cloud Sync)
-        // =========================================================
-        function loadCloudData() {
-            // الاستماع الحي لأي تغيير في قاعدة البيانات السحابية
-            dbCloud.ref('items').on('value', (snapshot) => {
-                const data = snapshot.val();
-                allItemsGlobal = data ? Object.values(data) : [];
-                renderItemsUI();
-            });
-        }
-
         function loadHiddenCategoriesStorage() { const saved = localStorage.getItem("faidy_hidden_categories"); if (saved) { hiddenCategories = JSON.parse(saved); } }
         function toggleCategoryVisibility(catName, event) { event.stopPropagation(); const index = hiddenCategories.indexOf(catName); if (index > -1) { hiddenCategories.splice(index, 1); } else { hiddenCategories.push(catName); } localStorage.setItem("faidy_hidden_categories", JSON.stringify(hiddenCategories)); renderItemsUI(); }
 
@@ -414,28 +468,15 @@
         // =========================================================
         // تعديلات السحابة المباشرة
         // =========================================================
-        function updateField(id, field, value) { 
-            // تحديث الحقل في السحابة مباشرة
-            dbCloud.ref('items/' + id).update({ [field]: value }); 
-        }
-        
-        function updateItemCategoryInline(id, newCat) { 
-            dbCloud.ref('items/' + id).update({ cat: newCat });
-        }
-        
-        function deleteItem(id) { 
-            if (confirm("حذف الصنف نهائياً من السحابة؟")) { 
-                dbCloud.ref('items/' + id).remove(); 
-            } 
-        }
+        function updateField(id, field, value) { dbCloud.ref('items/' + id).update({ [field]: value }); }
+        function updateItemCategoryInline(id, newCat) { dbCloud.ref('items/' + id).update({ cat: newCat }); }
+        function deleteItem(id) { if (confirm("حذف الصنف نهائياً من السحابة؟")) { dbCloud.ref('items/' + id).remove(); } }
         
         function addNewCategory() { 
             const v = document.getElementById('newCatInput').value.trim(); 
             if(v && !categories.includes(v)) { 
                 const placeholderItem = { id: Date.now(), name: 'قسم تجريبي للربط', price: '0.00', cat: v, img: '', code: '000', unit: '', featured: false, isPlaceholder: true }; 
-                dbCloud.ref('items/' + placeholderItem.id).set(placeholderItem).then(() => {
-                    document.getElementById('newCatInput').value = '';
-                });
+                dbCloud.ref('items/' + placeholderItem.id).set(placeholderItem).then(() => { document.getElementById('newCatInput').value = ''; });
             } else if (categories.includes(v)) { alert("هذا القسم موجود مسبقاً!"); } 
         }
         
@@ -448,26 +489,13 @@
         function toggleSelectAllItems() { 
             window.allSelectedState = !window.allSelectedState; 
             let updates = {};
-            allItemsGlobal.forEach(item => {
-                if (!item.isPlaceholder) { updates[item.id + '/selectedForMenu'] = window.allSelectedState; }
-            });
+            allItemsGlobal.forEach(item => { if (!item.isPlaceholder) { updates[item.id + '/selectedForMenu'] = window.allSelectedState; } });
             dbCloud.ref('items').update(updates);
         }
 
         function updateItemSelection(id, isChecked) { updateField(id, 'selectedForMenu', isChecked); }
-        
-        function updateImg(id, input) { 
-            if (input.files && input.files[0]) { 
-                const reader = new FileReader(); 
-                reader.onload = e => { updateField(id, 'img', e.target.result); }; 
-                reader.readAsDataURL(input.files[0]); 
-            } 
-        }
-        
-        function toggleFeatured(id, btn) { 
-            const isFeatured = btn.style.filter === 'grayscale(1)'; 
-            updateField(id, 'featured', isFeatured); 
-        }
+        function updateImg(id, input) { if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = e => { updateField(id, 'img', e.target.result); }; reader.readAsDataURL(input.files[0]); } }
+        function toggleFeatured(id, btn) { const isFeatured = btn.style.filter === 'grayscale(1)'; updateField(id, 'featured', isFeatured); }
 
         // =========================================================
         // رسم واجهة الصنف
@@ -626,9 +654,7 @@
                     updates[itemId] = { id: itemId, name: name, price: price, code: code, unit: unit, cat: cat, img: img, featured: featured, selectedForMenu: true, driveLink: driveLink };
                     counter++;
                 });
-                dbCloud.ref('items').update(updates).then(() => {
-                    alert("✅ تم استرجاع (" + counter + ") صنفاً بنجاح ورفعها للسحابة!");
-                });
+                dbCloud.ref('items').update(updates).then(() => { alert("✅ تم استرجاع (" + counter + ") صنفاً بنجاح ورفعها للسحابة!"); });
             };
             reader.readAsText(file, "UTF-8");
         }
@@ -662,11 +688,7 @@
                         }
                     });
                     
-                    if (Object.keys(updates).length > 0) {
-                        dbCloud.ref('items').update(updates).then(() => {
-                            alert(`✅ اكتملت العملية! تم استيراد وتحديث الروابط لـ (${updatedCount}) صنف.`);
-                        });
-                    } else { alert("لم يتم العثور على أي تحديثات صالحة."); }
+                    if (Object.keys(updates).length > 0) { dbCloud.ref('items').update(updates).then(() => { alert(`✅ اكتملت العملية! تم استيراد وتحديث الروابط لـ (${updatedCount}) صنف.`); }); } else { alert("لم يتم العثور على أي تحديثات صالحة."); }
                     input.value = '';
                 } catch (err) { alert("❌ حدث خطأ: " + err.message); input.value = ''; }
             };
@@ -709,13 +731,34 @@
             let excelData = [ ["كود", "اسم", "السعر", "الوحدة", "القسم", "رابط محلي"] ]; 
             exportItems.forEach(item => { 
                 const cleanName = item.name.replace(/[\\/:*?"<>|]/g, "").trim(); const cleanCode = (item.code || '000').replace(/[\\/:*?"<>|]/g, "").trim(); const imageFileName = `${cleanName}_رقم_${cleanCode}.jpg`; let excelLinkFormula = "لا توجد صورة"; 
-                if (item.img && item.img.startsWith('data:image')) { 
-                    const base64Data = item.img.split(',')[1]; imageFolder.file(imageFileName, base64Data, {base64: true}); excelLinkFormula = { f: `HYPERLINK("Faidy_Images/${imageFileName}", "👁️ فتح صورة الصنف")` }; 
-                } 
+                if (item.img && item.img.startsWith('data:image')) { const base64Data = item.img.split(',')[1]; imageFolder.file(imageFileName, base64Data, {base64: true}); excelLinkFormula = { f: `HYPERLINK("Faidy_Images/${imageFileName}", "👁️ فتح صورة الصنف")` }; } 
                 excelData.push([ item.code || '000', item.name, parseFloat(item.price) || 0.00, item.unit || 'كيلو', item.cat || 'عام', excelLinkFormula ]); 
             }); 
             const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(excelData); XLSX.utils.book_append_sheet(wb, ws, "البيانات"); const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }); zip.file("البيانات.xlsx", excelBuffer); 
             zip.generateAsync({type: "blob"}).then(content => { saveAs(content, "إكسل_الفايدي.zip"); }); 
+        }
+
+        function exportWordWithLocalImages() {
+            if (!dbCloud) { alert("خطأ في الاتصال بالسحابة!"); return; }
+            alert("جاري إنشاء التقرير (وورد + صور) وضغط الملفات.. يرجى الانتظار."); const zip = new JSZip(); const imageFolder = zip.folder("Faidy_Images");
+            const exportItems = allItemsGlobal.filter(i => !i.isPlaceholder && i.selectedForMenu !== false);
+            if (exportItems.length === 0) { alert("⚠️ لا توجد أصناف حالية لتصديرها."); return; }
+            let detectedCategories = [...new Set(exportItems.map(i => i.cat || 'عام'))].sort((a, b) => { if (a.includes("بقلاوة")) return -1; if (b.includes("بقلاوة")) return 1; return 0; });
+            let tableRows = "";
+            detectedCategories.forEach(catName => {
+                const catItems = exportItems.filter(i => (i.cat || 'عام') === catName).sort((a,b) => a.id - b.id);
+                if(catItems.length > 0) {
+                    tableRows += `<tr><td colspan="5" style="background-color: #EEDC82; color: #4A0000; font-weight: bold; text-align: center; padding: 10px; font-size: 16px;">قسم: ${catName}</td></tr>`;
+                    catItems.forEach(item => {
+                        const cleanName = item.name.replace(/[\\/:*?"<>|]/g, "").trim(); const cleanCode = (item.code || '000').replace(/[\\/:*?"<>|]/g, "").trim(); const imageFileName = `${cleanName}_رقم_${cleanCode}.jpg`; let imageLinkHtml = "<span style='color:#777;'>لا توجد صورة</span>";
+                        if (item.img && item.img.startsWith('data:image')) { const base64Data = item.img.split(',')[1]; imageFolder.file(imageFileName, base64Data, {base64: true}); imageLinkHtml = `<a href="Faidy_Images/${imageFileName}" style="color: #0000FF; text-decoration: underline;">👁️ فتح الصورة</a>`; }
+                        tableRows += `<tr> <td style="border: 1px solid #D4AF37; padding: 5px; text-align: center;">${item.code || '000'}</td> <td style="border: 1px solid #D4AF37; padding: 5px; font-weight: bold; text-align: right;">${item.name}</td> <td style="border: 1px solid #D4AF37; padding: 5px; color: #800000; direction: ltr; text-align: center;">${item.price || '0.00'}</td> <td style="border: 1px solid #D4AF37; padding: 5px; text-align: center;">${item.unit || ''}</td> <td style="border: 1px solid #D4AF37; padding: 5px; text-align: center;">${imageLinkHtml}</td> </tr>`;
+                    });
+                }
+            });
+            const wordContent = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>تقرير أصناف الفايدي</title><style>body { font-family: 'Arial', sans-serif; direction: rtl; text-align: right; } table { width: 100%; border-collapse: collapse; margin-top: 20px; direction: rtl; } th { background-color: #800000; color: white; padding: 10px; border: 1px solid #D4AF37; font-size: 14px; text-align: center; } td { border: 1px solid #D4AF37; padding: 5px; text-align: center; } h2 { text-align: center; color: #800000; border-bottom: 2px solid #D4AF37; padding-bottom: 10px; } a { color: #0000FF; text-decoration: underline; }</style></head><body dir="rtl"><h2>حلواني أبناء الفايدي 1989 - التقرير الشامل للأصناف (بالصور)</h2><table><thead><tr><th>رقم الصنف</th><th>اسم الصنف</th><th>السعر (د.ل)</th><th>الوحدة</th><th>استعراض الصورة</th></tr></thead><tbody>${tableRows}</tbody></table></body></html>`;
+            zip.file("تقرير_أصناف_الفايدي_مع_الصور.doc", '\ufeff' + wordContent);
+            zip.generateAsync({type: "blob"}).then(content => { saveAs(content, "الأرشيف_المتكامل_وورد_وصور_الفايدي.zip"); alert("✅ تم التصدير بنجاح!\n\nستجد تقرير الوورد ومجلد الصور داخل الملف المضغوط."); });
         }
         
         function exportDataToSpeedlyXLSX() { 
