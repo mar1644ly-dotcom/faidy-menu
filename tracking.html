@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تتبع طلبات الفايدي - بث تجريبي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+        
+        body { font-family: 'Cairo', sans-serif; background-color: #fdfbf7; margin: 0; padding: 0; text-align: center; }
+        
+        .header { background: #800000; color: #EEDC82; padding: 15px; font-weight: 900; font-size: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        #role-selection { margin-top: 50px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        
+        .btn { padding: 15px 30px; border: none; border-radius: 10px; font-family: 'Cairo'; font-size: 18px; font-weight: bold; cursor: pointer; width: 80%; max-width: 300px; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn-driver { background: #27ae60; color: white; border: 2px solid #2ecc71; }
+        .btn-driver:hover { background: #2ecc71; transform: scale(1.05); }
+        .btn-customer { background: #2980b9; color: white; border: 2px solid #3498db; }
+        .btn-customer:hover { background: #3498db; transform: scale(1.05); }
+        .btn-stop { background: #c0392b; color: white; margin-top: 20px; display: none; }
+
+        /* شاشة المندوب */
+        #driver-screen { display: none; padding: 20px; margin-top: 20px; }
+        .status-box { background: white; border: 2px dashed #D4AF37; padding: 20px; border-radius: 12px; margin: 20px auto; max-width: 400px; font-weight: bold; color: #800000; }
+        .pulse { animation: pulseAnim 1.5s infinite alternate; color: #27ae60; font-size: 24px; }
+        @keyframes pulseAnim { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* شاشة الزبون */
+        #customer-screen { display: none; padding: 10px; }
+        #map { height: 70vh; width: 100%; max-width: 800px; margin: 0 auto; border: 4px solid #D4AF37; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1; }
+        .customer-info { background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; max-width: 800px; margin: 10px auto; font-weight: bold; color: #333; }
+        
+        .map-marker-icon { font-size: 30px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body>
+
+    <div class="header">حلواني أبناء الفايدي - البث الحي للتوصيل</div>
+
+    <div id="role-selection">
+        <h3 style="color:#800000;">اختر واجهة التجربة:</h3>
+        <button class="btn btn-driver" onclick="openDriverScreen()">🛵 أنا المندوب (أرسل موقعي)</button>
+        <button class="btn btn-customer" onclick="openCustomerScreen()">📱 أنا الزبون (أتتبع الطلب)</button>
+    </div>
+
+    <div id="driver-screen">
+        <h2 style="color:#27ae60;">واجهة مندوب التوصيل</h2>
+        <div class="status-box" id="driver-status">
+            الرجاء الضغط على الزر أدناه لبدء إرسال موقعك للزبون.
+        </div>
+        <button class="btn btn-driver" id="btn-start" onclick="startTracking()">🚀 بدء التوصيل (مشاركة الـ GPS)</button>
+        <button class="btn btn-stop" id="btn-stop" onclick="stopTracking()">🛑 إنهاء التوصيل (إيقاف البث)</button>
+    </div>
+
+    <div id="customer-screen">
+        <h2 style="color:#2980b9;">واجهة الزبون (خريطة التتبع)</h2>
+        <div class="customer-info" id="customer-status">
+            جاري انتظار إشارة المندوب... 📡
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <script>
+        // تهيئة السحابة (استخدمنا نفس قاعدة بيانات الفايدي)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBr-XVqipP8NBOakKQgYR4gfLyYaFDwqD8",
+            authDomain: "faidy-web-app.firebaseapp.com",
+            databaseURL: "https://faidy-web-app-default-rtdb.firebaseio.com",
+            projectId: "faidy-web-app",
+            storageBucket: "faidy-web-app.firebasestorage.app",
+            messagingSenderId: "425340022026",
+            appId: "1:425340022026:web:9342a7b3426a71fb9e1ef3"
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const dbTrack = firebase.database();
+        const ORDER_ID = "Order_999"; // رقم طلب تجريبي موحد للتجربة
+
+        let watchId = null;
+        let map = null;
+        let driverMarker = null;
+
+        // ---------- إدارة الواجهات ---------- //
+        function openDriverScreen() {
+            document.getElementById('role-selection').style.display = 'none';
+            document.getElementById('driver-screen').style.display = 'block';
+        }
+
+        function openCustomerScreen() {
+            document.getElementById('role-selection').style.display = 'none';
+            document.getElementById('customer-screen').style.display = 'block';
+            initMap();
+            listenToDriverLocation();
+        }
+
+        // ---------- أكواد المندوب (الإرسال) ---------- //
+        function startTracking() {
+            if (!navigator.geolocation) {
+                alert("جهازك أو متصفحك لا يدعم تحديد الموقع (GPS).");
+                return;
+            }
+
+            document.getElementById('driver-status').innerHTML = "جاري طلب إذن الموقع... ⏳";
+
+            // فتح قنوات التتبع الحي
+            watchId = navigator.geolocation.watchPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const speed = position.coords.speed || 0; // السرعة إن توفرت
+                    
+                    // إرسال الإحداثيات للسحابة فوراً
+                    dbTrack.ref('Live_Tracking/' + ORDER_ID).set({
+                        lat: lat,
+                        lng: lng,
+                        speed: speed,
+                        timestamp: Date.now(),
+                        status: 'on_the_way'
+                    });
+
+                    document.getElementById('driver-status').innerHTML = `<div class="pulse">📡 البث الحي يعمل بنجاح... المندوب يتحرك.</div><br><span style="font-size:12px; color:#555;">(Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)})</span>`;
+                    document.getElementById('btn-start').style.display = 'none';
+                    document.getElementById('btn-stop').style.display = 'block';
+                },
+                function(error) {
+                    document.getElementById('driver-status').innerHTML = "❌ خطأ في الـ GPS: " + error.message + "<br>(تأكد من تفعيل الموقع واستخدام رابط HTTPS)";
+                },
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+            );
+        }
+
+        function stopTracking() {
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            dbTrack.ref('Live_Tracking/' + ORDER_ID).update({ status: 'delivered', timestamp: Date.now() });
+            
+            document.getElementById('driver-status').innerHTML = "تم إنهاء التوصيل وإيقاف البث بنجاح. ✅";
+            document.getElementById('btn-start').style.display = 'block';
+            document.getElementById('btn-stop').style.display = 'none';
+        }
+
+        // ---------- أكواد الزبون (الاستقبال والخريطة) ---------- //
+        function initMap() {
+            // تهيئة الخريطة وجعل مركزها الافتراضي مدينة بنغازي
+            map = L.map('map').setView([32.1167, 20.0667], 13);
+            
+            // استخدام خرائط OpenStreetMap المجانية (ممتازة وسريعة)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; الفايدي لتتبع الطلبات',
+                maxZoom: 19
+            }).addTo(map);
+
+            // تصميم أيقونة المندوب (دراجة نارية)
+            const bikeIcon = L.divIcon({
+                html: '<div class="map-marker-icon">🛵</div>',
+                className: 'dummy',
+                iconSize: [40, 40],
+                iconAnchor: [20, 40]
+            });
+
+            // وضع المندوب على الخريطة
+            driverMarker = L.marker([32.1167, 20.0667], {icon: bikeIcon}).addTo(map);
+        }
+
+        function listenToDriverLocation() {
+            // الاستماع الحي للسحابة 
+            dbTrack.ref('Live_Tracking/' + ORDER_ID).on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data && data.lat && data.lng) {
+                    
+                    if(data.status === 'delivered') {
+                        document.getElementById('customer-status').innerHTML = "🎉 تم توصيل الطلب بنجاح!";
+                        document.getElementById('customer-status').style.color = "#27ae60";
+                        return;
+                    }
+
+                    // تحريك الدراجة في الخريطة بناءً على إحداثيات السحابة
+                    const newLatLng = new L.LatLng(data.lat, data.lng);
+                    driverMarker.setLatLng(newLatLng);
+                    
+                    // تحريك كاميرا الخريطة لتتبع المندوب برفق
+                    map.panTo(newLatLng, {animate: true, duration: 1});
+
+                    let speedKm = (data.speed * 3.6).toFixed(1); // تحويل السرعة من م/ث إلى كم/س
+                    document.getElementById('customer-status').innerHTML = `🛵 المندوب في الطريق إليك الآن... (السرعة: ${speedKm > 0 ? speedKm : 0} كم/س)`;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
