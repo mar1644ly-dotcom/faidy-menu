@@ -4,23 +4,11 @@
     <meta charset="UTF-8">
     <title>SaaS Admin - لوحة إدارة العميل</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-        
-        /* المتغيرات اللونية (تتغير برمجياً) */
-        :root {
-            --primary: #004d4d;
-            --secondary: #EEDC82;
-            --bg: #f4f4f4;
-        }
-
+        :root { --primary: #004d4d; --secondary: #EEDC82; --bg: #f4f4f4; }
         body { font-family: 'Cairo', sans-serif; background-color: var(--bg); padding: 0; margin: 0; scroll-behavior: smooth; user-select: none; }
         #main-app-content { display: none; padding-bottom: 30px; }
         body.is-admin #main-app-content { display: block; }
@@ -29,10 +17,8 @@
         .login-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); text-align: center; max-width: 320px; width: 90%; }
         .login-title { color: #2c3e50; font-weight: 900; margin: 0 0 5px 0; font-size: 22px; }
         .login-subtitle { color: #7f8c8d; font-weight: bold; font-size: 13px; margin-bottom: 25px; }
-        .login-input { width: 100%; padding: 12px; border: 2px solid #ccc; border-radius: 10px; text-align: center; font-family: 'Cairo'; font-size: 15px; font-weight: bold; outline: none; margin-bottom: 15px; box-sizing: border-box; }
-        .login-input:focus { border-color: #3498db; }
-        .login-btn { background: #3498db; color: white; border: none; width: 100%; padding: 12px; border-radius: 10px; font-family: 'Cairo'; font-size: 16px; font-weight: 900; cursor: pointer; transition: 0.3s; }
-        .login-btn:hover { background: #2980b9; }
+        .login-input { width: 100%; padding: 12px; border: 2px solid #ccc; border-radius: 10px; text-align: center; font-family: 'Cairo'; font-weight: bold; outline: none; margin-bottom: 15px; box-sizing: border-box; }
+        .login-btn { background: #3498db; color: white; border: none; width: 100%; padding: 12px; border-radius: 10px; font-family: 'Cairo'; font-weight: 900; cursor: pointer; }
 
         .faidy-top-bar { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--secondary); }
         .brand-right-title { font-weight: 900; font-size: 18px; color: var(--secondary); display: flex; align-items: center; }
@@ -45,7 +31,6 @@
         
         .admin-actions-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px; padding-top:10px; border-top:1px dashed #ccc; }
         .admin-actions-row button { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Cairo'; color: white; font-size: 13px; transition: 0.2s; }
-        .admin-actions-row button:hover { transform: translateY(-2px); }
         
         .sticky-search-bar { background: var(--primary); padding: 10px 15px; position: sticky; top: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .search-box { width: 100%; max-width: 400px; padding: 8px 15px; border-radius: 20px; font-family: 'Cairo'; font-weight: bold; text-align: center; border:none; outline:none; }
@@ -61,7 +46,10 @@
         .price-container { display: flex; align-items: center; gap: 3px; color: #d35400; font-weight: 700; font-size: 18px; }
         .price-display { outline: none; min-width: 30px; text-align: center; background:#fdfbf7; padding:0 5px; border-radius:4px; }
         .img-preview-container { width: 100%; height: 200px; border-radius: 8px; overflow: hidden; margin-top: 10px; background: #faf8f5; border: 1px dashed #ccc; display: flex; justify-content: center; align-items: center; }
-        .img-preview-container img { width: 100%; height: 100%; object-fit: contain; }
+        
+        /* التعديل الهندسي الأول: إضافة فلتر تحسين التباين للصور المعروضة في الإدارة */
+        .img-preview-container img { width: 100%; height: 100%; object-fit: contain; image-rendering: -webkit-optimize-contrast; }
+        
         .cat-select-inline { background: var(--primary); color: white; border: none; border-radius: 15px; font-size: 11px; padding: 3px 10px; position: absolute; top: -12px; right: 15px; font-family: 'Cairo'; outline: none; z-index: 5; }
 
         .branches-list-admin { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; border-top:1px dashed var(--primary); padding-top:10px; width:100%; }
@@ -100,10 +88,10 @@
             
             <div class="admin-actions-row">
                 <button style="background:#28a745;" onclick="addNewItemWithCategory()">➕ إنشاء صنف جديد</button>
-                <button style="background:#9b59b6;" onclick="document.getElementById('import-json-upload').click()">📥 حقن بيانات من النظام القديم (JSON)</button>
+                <button style="background:#9b59b6;" onclick="document.getElementById('import-json-upload').click()">📥 رفع بيانات من ملف JSON</button>
                 <input type="file" id="import-json-upload" accept=".json" style="display:none" onchange="importLocalJSON(this)">
                 
-                <button style="background:#d35400; font-size:14px;" onclick="exportV2Menu()">🚀 تصدير المنيو السحابي المخصص للزبائن</button>
+                <button id="sync-btn" style="background:#d35400; font-size:14px; min-width: 250px;" onclick="forceSyncAllItems()">🚀 مزامنة ورفع كل الأصناف للسحابة (المنيو الحي)</button>
             </div>
         </div>
 
@@ -125,7 +113,7 @@
         let companyProfile = {};
         let companyBranding = {};
         let companyBranches = [];
-        let companyLogo = ''; // متغير لحفظ اللوجو
+        let companyLogo = ''; 
         
         let allItemsGlobal = [];
         let categories = [];
@@ -148,7 +136,6 @@
         function performSaaSLogin() {
             let cid = document.getElementById('company-id-input').value.trim().toLowerCase();
             let pass = document.getElementById('main-login-pass').value.trim();
-            
             if(!cid) return alert("الرجاء إدخال المعرف البرمجي.");
             if(pass !== "2026") return alert("الرقم السري غير صحيح.");
 
@@ -161,53 +148,28 @@
                     companyProfile = data.profile || {};
                     companyBranding = data.branding || { primaryColor: '#004d4d', secondaryColor: '#EEDC82', bgColor: '#f4f4f4' };
                     companyBranches = data.branches || [];
-                    companyLogo = companyBranding.logo || ''; // 💡 جلب اللوجو
+                    companyLogo = companyBranding.logo || ''; 
 
-                    // تطبيق الهوية البصرية
                     document.documentElement.style.setProperty('--primary', companyBranding.primaryColor);
                     document.documentElement.style.setProperty('--secondary', companyBranding.secondaryColor);
                     document.documentElement.style.setProperty('--bg', companyBranding.bgColor);
                     
-                    // 💡 عرض اللوجو أو الاسم في الشريط العلوي للإدارة
                     let headerTitleElem = document.getElementById('admin-header-title');
-                    if (companyLogo) {
-                        headerTitleElem.innerHTML = `<img src="${companyLogo}" style="max-height: 40px; object-fit: contain;">`;
-                    } else {
-                        headerTitleElem.innerText = "لوحة الإدارة - " + (companyProfile.name || cid);
-                    }
+                    if (companyLogo) headerTitleElem.innerHTML = `<img src="${companyLogo}" style="max-height: 40px; object-fit: contain;">`;
+                    else headerTitleElem.innerText = "لوحة الإدارة - " + (companyProfile.name || cid);
 
                     document.getElementById("login-portal").style.display = 'none';
                     document.body.className = 'is-admin';
                     
                     renderAdminBranches();
                     syncDataFromOldToNew(); 
-                } else {
-                    alert("المعرف البرمجي غير صحيح أو الشركة غير مسجلة في منصة المالك!");
-                }
+                } else alert("الشركة غير مسجلة في منصة المالك!");
             }).catch(e => alert("حدث خطأ في الاتصال بالخوادم."));
         }
 
         function logoutUser() { location.reload(); }
 
-        function syncDataFromOldToNew() {
-            dbCloud.ref(SAAS_COMPANY_PATH + 'items').once('value').then(snap => {
-                if(snap.exists()) {
-                    allItemsGlobal = snap.val() || [];
-                    queueRender();
-                } else {
-                    if(allItemsGlobal.length > 0) {
-                        saveStateToCloud();
-                        alert("✅ تم ترحيل أصنافك المخزنة محلياً إلى سحابة الشركة الجديدة بنجاح!");
-                    }
-                    queueRender();
-                }
-            });
-        }
-
-        function saveStateToCloud() {
-            if(currentCompanyId) {
-                dbCloud.ref(SAAS_COMPANY_PATH + 'items').set(allItemsGlobal);
-            }
+        function saveLocalOffline() {
             if (dbOffline) {
                 try {
                     const tx = dbOffline.transaction(['items'], 'readwrite');
@@ -217,12 +179,65 @@
             }
         }
 
+        function syncDataFromOldToNew() {
+            dbCloud.ref(SAAS_COMPANY_PATH + 'items').once('value').then(snap => {
+                if(snap.exists()) {
+                    let itemsObj = snap.val();
+                    allItemsGlobal = Object.values(itemsObj);
+                    queueRender();
+                } else {
+                    queueRender();
+                }
+            });
+        }
+
+        async function forceSyncAllItems() {
+            if(!currentCompanyId) return alert("سجل الدخول أولاً");
+            if(allItemsGlobal.length === 0) return alert("لا توجد أصناف لرفعها");
+            
+            let syncBtn = document.getElementById('sync-btn');
+            syncBtn.disabled = true;
+            syncBtn.style.background = "#7f8c8d";
+            
+            let total = allItemsGlobal.length;
+            let successCount = 0;
+            
+            alert("⏳ ستبدأ عملية الرفع المتسلسلة الآن. يرجى عدم إغلاق الصفحة حتى تكتمل الـ 100%.");
+            
+            for(let i = 0; i < total; i++) {
+                try {
+                    syncBtn.innerText = `⏳ جاري الرفع... (${i + 1} من ${total})`;
+                    await dbCloud.ref(SAAS_COMPANY_PATH + 'items/' + allItemsGlobal[i].id).set(allItemsGlobal[i]);
+                    successCount++;
+                } catch(e) {
+                    console.error("خطأ في رفع الصنف رقم: " + allItemsGlobal[i].code, e);
+                }
+            }
+            
+            syncBtn.innerText = "🚀 مزامنة ورفع كل الأصناف للسحابة (المنيو الحي)";
+            syncBtn.disabled = false;
+            syncBtn.style.background = "#d35400";
+            
+            if(successCount === total) {
+                alert("✅ اكتملت المزامنة 100%! تم رفع " + total + " صنف بنجاح. يمكنك الآن فتح رابط المنيو.");
+            } else {
+                alert("⚠️ انتهت العملية، ولكن تم رفع " + successCount + " من " + total + " صنف فقط. تأكد من استقرار الإنترنت لديك.");
+            }
+        }
+
+        function updateField(id, f, v) { 
+            let idx = allItemsGlobal.findIndex(i=>i.id===id); 
+            if(idx>-1) { 
+                allItemsGlobal[idx][f]=v; 
+                if(currentCompanyId) dbCloud.ref(SAAS_COMPANY_PATH + 'items/' + id + '/' + f).set(v);
+                saveLocalOffline(); 
+            } 
+        }
+
         function renderAdminBranches() {
             let c = document.getElementById('adminBranchesContainer'); c.innerHTML = '';
-            if(companyBranches.length === 0) c.innerHTML = '<span style="color:#e74c3c; font-size:12px;">لا يوجد فروع مسجلة، يرجى مراجعة لوحة المالك.</span>';
-            companyBranches.forEach(b => {
-                if(b) c.innerHTML += `<div class="b-card">🏪 ${b.name} (${b.phone})</div>`;
-            });
+            if(companyBranches.length === 0) c.innerHTML = '<span style="color:#e74c3c; font-size:12px;">لا يوجد فروع مسجلة.</span>';
+            companyBranches.forEach(b => { if(b) c.innerHTML += `<div class="b-card">🏪 ${b.name} (${b.phone})</div>`; });
         }
 
         function importLocalJSON(input) {
@@ -233,8 +248,8 @@
                     let data = JSON.parse(e.target.result);
                     let items = Array.isArray(data) ? data : (data.items ? Object.values(data.items) : []);
                     allItemsGlobal = items.map((i, idx) => { if(!i.id) i.id = Date.now()+idx; return i; });
-                    saveStateToCloud(); queueRender();
-                    alert("✅ تم حقن البيانات ورفعها لسحابة الشركة بنجاح!");
+                    saveLocalOffline(); queueRender();
+                    alert("تم الاستيراد بنجاح! الأصناف الآن أمامك. اضغط على الزر البرتقالي للرفع المتسلسل.");
                 } catch(err) { alert("خطأ في الملف!"); }
             };
             reader.readAsText(file);
@@ -284,291 +299,82 @@
             });
         }
 
-        function updateField(id, f, v) { let idx = allItemsGlobal.findIndex(i=>i.id===id); if(idx>-1) { allItemsGlobal[idx][f]=v; saveStateToCloud(); } }
         function filterByCat(c) { window.currentFilter=c; queueRender(); }
         function filterItems() { queueRender(); }
-        function addNewCategory() { let v=document.getElementById('newCatInput').value.trim(); if(v) { categories.push(v); document.getElementById('newCatInput').value=''; queueRender(); } }
-        function addNewItemWithCategory() { allItemsGlobal.push({id:Date.now(), name:'صنف جديد', price:'0.00', cat:'عام', code:'000', selectedForMenu:true}); saveStateToCloud(); queueRender(); }
-        function updateImg(id, inp) { if(inp.files[0]){ let r=new FileReader(); r.onload=e=>{ updateField(id, 'img', e.target.result); queueRender(); }; r.readAsDataURL(inp.files[0]); } }
+        
+        function addNewCategory() { 
+            let v=document.getElementById('newCatInput').value.trim(); 
+            if(v) { categories.push(v); document.getElementById('newCatInput').value=''; queueRender(); } 
+        }
+        
+        function addNewItemWithCategory() { 
+            let newItem = {id:Date.now(), name:'صنف جديد', price:'0.00', cat:'عام', code:'000', selectedForMenu:true};
+            allItemsGlobal.push(newItem); 
+            if(currentCompanyId) dbCloud.ref(SAAS_COMPANY_PATH + 'items/' + newItem.id).set(newItem);
+            saveLocalOffline(); 
+            queueRender(); 
+        }
+        
+        // التعديل الهندسي الثاني: تحويل دالة الرفع إلى Async لانتظار معالجة الصورة
+        async function updateImg(id, inp) { 
+            if(inp.files && inp.files[0]){ 
+                try {
+                    // نمرر الصورة للدالة الذكية وننتظر النتيجة المعالجة والمضغوطة
+                    let processedImg = await processImage(inp.files[0]);
+                    updateField(id, 'img', processedImg); 
+                    queueRender(); 
+                } catch(e) {
+                    alert("خطأ في معالجة الصورة: " + e);
+                }
+            } 
+        }
 
-        function exportV2Menu() {
-            if(companyBranches.length === 0) return alert("هذا العميل ليس لديه فروع مسجلة! الرجاء الإضافة من لوحة المالك.");
-            if(allItemsGlobal.length === 0) return alert("لا توجد أصناف للتصدير!");
+        // التعديل الهندسي الثالث: إضافة خوارزمية (Smart Scaling & Compression)
+        function processImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
 
-            let branchOptions = '<option value="" disabled selected>-- الرجاء اختيار الفرع الأقرب إليك --</option>';
-            companyBranches.forEach(b => { if(b) branchOptions += `<option value="${b.id}" data-phone="${b.phone}">${b.name}</option>`; });
+                        const MAX_SIZE = 1200; // حد أقصى للأبعاد لحماية جودة عرض الأطعمة
+                        let width = img.width;
+                        let height = img.height;
 
-            let menuItems = allItemsGlobal.filter(i => i.selectedForMenu !== false);
-            let uniqueCats = [...new Set(menuItems.map(i => i.cat))];
-            let catButtonsHTML = `<button class="filter-btn active" onclick="filterByCat('all', this)">الكل</button>`;
-            uniqueCats.forEach(c => { catButtonsHTML += `<button class="filter-btn" onclick="filterByCat('${c}', this)">${c}</button>`; });
+                        // معادلة الحفاظ على النسبة والتناسب (Aspect-Ratio)
+                        if (width > height) {
+                            if (width > MAX_SIZE) {
+                                height *= MAX_SIZE / width;
+                                width = MAX_SIZE;
+                            }
+                        } else {
+                            if (height > MAX_SIZE) {
+                                width *= MAX_SIZE / height;
+                                height = MAX_SIZE;
+                            }
+                        }
 
-            let cardsHTML = '';
-            menuItems.forEach(item => {
-                let imgData = item.img || 'https://via.placeholder.com/350x220?text=بدون+صورة';
-                cardsHTML += `
-                    <div class="card" data-category="${item.cat}">
-                        <div class="code-tag">رقم: ${item.code || '000'}</div>
-                        <img src="${imgData}" loading="lazy">
-                        <h3 class="card-title">${item.name}</h3>
-                        <div class="card-price">${item.price} د.ل</div>
-                        <button class="order-btn" onclick="openQtyModal('${item.name.replace(/'/g,"\\'")}', '${item.code}', '${item.price}', ${item.id})">🛒 أضف للسلة</button>
-                    </div>`;
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        // تفعيل خوارزمية التنعيم لرفع جودة البكسلات
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // التصدير بصيغة JPEG بمعامل جودة 0.9 لضمان أقصى حدة مع أقل حجم
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                        resolve(dataUrl);
+                    };
+                    img.onerror = () => reject("فشل تحميل الصورة في الذاكرة");
+                    img.src = event.target.result;
+                };
+                reader.onerror = () => reject("فشل قراءة الملف");
+                reader.readAsDataURL(file);
             });
-
-            // 💡 دمج الشعار (إن وجد) في كود المنيو للزبائن
-            let logoHtmlMenu = companyLogo 
-                ? `<img src="${companyLogo}" style="max-height: 60px; object-fit: contain; margin-bottom:10px;">` 
-                : `<h2 style="margin: 0 0 10px 0; color: var(--secondary);">${companyProfile.name}</h2>`;
-
-            let menuHTML = `<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>منيو - ${companyProfile.name}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"><\/script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"><\/script>
-    <style>
-        :root {
-            --primary: ${companyBranding.primaryColor};
-            --secondary: ${companyBranding.secondaryColor};
-            --bg: ${companyBranding.bgColor};
-        }
-        body { font-family: 'Cairo', sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
-        .top-bar { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; border-bottom: 3px solid var(--secondary); display:flex; flex-direction:column; align-items:center; }
-        .top-bar select { padding: 10px; border-radius: 8px; width: 95%; max-width: 400px; font-family: 'Cairo'; font-weight: bold; border: 2px solid var(--secondary); outline: none; }
-        .filter-container { display: flex; overflow-x: auto; gap: 8px; padding: 10px; background: white; justify-content: center; }
-        .filter-container::-webkit-scrollbar { display: none; }
-        .filter-btn { background: rgba(0,0,0,0.1); color: var(--primary); border: 1px solid var(--primary); padding: 6px 15px; border-radius: 20px; font-family: 'Cairo'; white-space: nowrap; font-weight: bold; cursor: pointer; }
-        .filter-btn.active { background: var(--secondary); color: var(--primary); }
-        
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; padding: 15px; max-width: 1000px; margin: 0 auto; transition: 0.3s; }
-        .grid.dormant { opacity: 0.3; pointer-events: none; filter: grayscale(80%); }
-        .dormant-msg { text-align: center; color: #c0392b; font-weight: bold; padding: 15px; font-size: 16px; }
-        
-        .card { background: white; padding: 12px; border-radius: 12px; text-align: center; border-bottom: 4px solid var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .card img { width: 100%; height: 130px; object-fit: contain; }
-        .code-tag { background: #333; color: white; font-size: 11px; padding: 2px 8px; border-radius: 6px; display: inline-block; margin-bottom: 5px; font-weight: bold; }
-        .card-title { color: var(--primary); font-size: 15px; font-weight: 900; margin: 5px 0; }
-        .card-price { color: #d35400; font-weight: bold; font-size: 16px; margin-bottom: 10px; }
-        .order-btn { background: var(--secondary); color: var(--primary); border: none; padding: 8px; width: 100%; border-radius: 6px; font-family: 'Cairo'; font-weight: bold; cursor: pointer; }
-        
-        .cart-float { position: fixed; bottom: 20px; left: 20px; background: var(--primary); color: var(--secondary); padding: 12px 20px; border-radius: 30px; display: none; cursor: pointer; z-index: 999; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        #cartModal, #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; }
-        .btn-action { background: #27ae60; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-family: 'Cairo'; font-weight: bold; margin-bottom: 10px; cursor: pointer; font-size: 15px; }
-        
-        .cart-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #ccc; padding: 10px 0; text-align: right; }
-        .del-item-btn { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-family: 'Cairo'; font-size: 12px; font-weight: bold; margin-top:5px; }
-
-        #waiting-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 1000000; justify-content: center; align-items: center; flex-direction: column; text-align: center; color: white; padding: 20px; box-sizing: border-box; }
-        .spinner { border: 6px solid rgba(255,255,255,0.2); border-top: 6px solid var(--secondary); border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .order-status-box { background: rgba(255,255,255,0.1); border: 2px dashed var(--secondary); padding: 20px; border-radius: 12px; margin-bottom: 20px; width: 100%; max-width: 400px; }
-        .order-status-box h1 { margin: 0 0 10px 0; font-size: 22px; color: var(--secondary); }
-        .btn-wa-action { background: #25D366; color: white; border: none; padding: 12px; border-radius: 8px; font-family: 'Cairo'; font-weight: bold; cursor: pointer; display: none; width: 100%; max-width: 400px; margin-top:10px; font-size: 15px; }
-    </style>
-</head>
-<body>
-    <div class="top-bar">
-        ${logoHtmlMenu}
-        <select id="customerBranchSelect" onchange="activateMenu(this)">
-            ${branchOptions}
-        </select>
-    </div>
-    
-    <div class="filter-container" id="catButtonsContainer">${catButtonsHTML}</div>
-    <div id="dormant-msg" class="dormant-msg">الرجاء اختيار الفرع من الأعلى لعرض الأصناف... 👆</div>
-    <div class="grid dormant" id="menu-grid">${cardsHTML}</div>
-
-    <div class="cart-float" id="cartFloat" onclick="openCartModal()">🛒 السلة (<span id="cartBadge">0</span>)</div>
-
-    <div id="modal">
-        <div class="modal-content">
-            <h3 id="modalDesc" style="color: var(--primary); margin-top: 0;"></h3>
-            <input type="number" id="qty-input" value="1" min="1" style="width:80px; text-align:center; font-size:20px; border: 2px solid var(--primary); border-radius: 8px; padding: 5px; font-family:'Cairo'; font-weight:bold; outline:none;">
-            <br><br>
-            <button class="btn-action" onclick="confirmAddToCart()">➕ تأكيد وإضافة للسلة</button>
-            <button class="btn-action" style="background:#7f8c8d;" onclick="document.getElementById('modal').style.display='none'">إلغاء</button>
-        </div>
-    </div>
-
-    <div id="cartModal">
-        <div class="modal-content" style="max-height:85vh; overflow-y:auto;">
-            <h3 style="color:var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 10px; margin-top:0;">🛒 مراجعة السلة</h3>
-            <div id="cartItemsContainer"></div>
-            <div style="font-size: 18px; font-weight: 900; color: #d35400; text-align: right; margin: 15px 0;" id="cartTotalDisplay">الإجمالي: 0.00 د.ل</div>
-            
-            <div style="background:#f8f9fa; padding:15px; border-radius:8px; border: 1px solid #ddd; text-align:right; margin-bottom:15px;">
-                <label style="font-weight:bold; font-size:14px; color:#333;">طريقة الاستلام:</label><br>
-                <label style="cursor:pointer;"><input type="radio" name="recv-method" value="pickup" checked onchange="toggleAddress()"> 🚶‍♂️ استلام من الفرع</label><br>
-                <label style="cursor:pointer;"><input type="radio" name="recv-method" value="delivery" onchange="toggleAddress()"> 🛵 توصيل للمنزل</label>
-                
-                <div id="address-box" style="display:none; margin-top:10px;">
-                    <textarea id="cust-address" placeholder="المدينة، المنطقة، أقرب نقطة دالة..." style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; font-family:'Cairo'; box-sizing:border-box; outline:none;"></textarea>
-                </div>
-                
-                <input type="text" id="cust-name" placeholder="الاسم الكريم (لكتابته على الصندوق ✨)" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; margin-top:10px; font-family:'Cairo'; box-sizing:border-box; outline:none;">
-                <input type="tel" id="cust-phone" placeholder="رقم الهاتف (اختياري)" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; margin-top:10px; font-family:'Cairo'; box-sizing:border-box; outline:none; direction:ltr; text-align:right;">
-            </div>
-            
-            <button class="btn-action" onclick="sendCartCloud()">🚀 اعتماد وإرسال الطلب للفرع</button>
-            <button class="btn-action" style="background:#7f8c8d;" onclick="document.getElementById('cartModal').style.display='none'">رجوع للقائمة للتعديل</button>
-        </div>
-    </div>
-
-    <div id="waiting-modal">
-        <div class="spinner" id="waiting-spinner"></div>
-        <div class="order-status-box">
-            <h1 id="waiting-title">جاري إرسال طلبك...</h1>
-            <p id="waiting-desc">يرجى الانتظار لحين مراجعة الموظف لتوافر الأصناف.</p>
-        </div>
-        
-        <button id="btn-contact-cs" class="btn-wa-action" onclick="contactSupport()">💬 تواصل مع الفرع (استفسار)</button>
-        <button id="btn-close-waiting" class="btn-wa-action" style="background:#e74c3c;" onclick="closeWaitingModal()">❌ رجوع وتعديل السلة</button>
-        <button id="btn-new-order" class="btn-wa-action" style="background:#27ae60; margin-top:10px;" onclick="closeWaitingModal()">✅ إغلاق وبدء طلب جديد</button>
-    </div>
-
-    <script>
-        firebase.initializeApp({ databaseURL: "https://faidy-web-app-default-rtdb.firebaseio.com", projectId: "faidy-web-app" });
-        const dbCloud = firebase.database();
-        const ROOT_PATH = 'OMS_SAAS_V1/Companies/${currentCompanyId}/';
-        
-        let currentBranchId = null; let currentBranchPhone = null; 
-        let myCart = []; let currentOrderId = null;
-
-        function activateMenu(sel) {
-            sel.blur();
-            currentBranchId = sel.value;
-            currentBranchPhone = sel.options[sel.selectedIndex].getAttribute('data-phone');
-            document.getElementById('dormant-msg').style.display = 'none';
-            document.getElementById('menu-grid').classList.remove('dormant');
-        }
-
-        function toggleAddress() {
-            let isDel = document.querySelector('input[name="recv-method"]:checked').value === 'delivery';
-            document.getElementById('address-box').style.display = isDel ? 'block' : 'none';
-        }
-
-        function filterByCat(c, btn) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
-            document.querySelectorAll('.card').forEach(card => {
-                card.style.display = (c === 'all' || card.dataset.category === c) ? 'block' : 'none';
-            });
-        }
-
-        function openQtyModal(n,c,p,id) { 
-            window.tempItem = {id:id, name:n, code:c, price:parseFloat(p), qty:1}; 
-            document.getElementById('modalDesc').innerText = n + "\\n(" + p + " د.ل)"; 
-            document.getElementById('qty-input').value = 1; 
-            document.getElementById('modal').style.display = 'flex'; 
-        }
-        
-        function confirmAddToCart() { 
-            window.tempItem.qty = parseInt(document.getElementById('qty-input').value); 
-            let ex = myCart.find(i=>i.id===window.tempItem.id); 
-            if(ex) ex.qty += window.tempItem.qty; else myCart.push(window.tempItem); 
-            document.getElementById('modal').style.display = 'none'; 
-            updateCartUI(); 
-        }
-        
-        function updateCartUI() { 
-            document.getElementById('cartBadge').innerText = myCart.reduce((s,i)=>s+i.qty,0); 
-            document.getElementById('cartFloat').style.display = myCart.length > 0 ? 'flex' : 'none'; 
-        }
-        
-        function openCartModal() {
-            let html = ''; let total = 0;
-            myCart.forEach((i, idx) => { 
-                let t = i.price * i.qty; total += t;
-                html += \`
-                    <div class="cart-item">
-                        <div>
-                            <b style="color:var(--primary);">\${i.name}</b><br>
-                            <span style="font-size:12px; color:#666; font-weight:bold;">الكمية: \${i.qty} | السعر: \${i.price} د.ل</span>
-                        </div>
-                        <div style="text-align:left;">
-                            <b style="color:#d35400; display:block; margin-bottom:5px;">\${t.toFixed(2)} د.ل</b>
-                            <button class="del-item-btn" onclick="removeFromCart(\${idx})">حذف 🗑️</button>
-                        </div>
-                    </div>\`;
-            });
-            document.getElementById('cartItemsContainer').innerHTML = html;
-            document.getElementById('cartTotalDisplay').innerText = "الإجمالي: " + total.toFixed(2) + " د.ل";
-            document.getElementById('cartModal').style.display = 'flex';
-        }
-
-        function removeFromCart(idx) { 
-            myCart.splice(idx, 1); updateCartUI(); 
-            if(myCart.length > 0) openCartModal(); else document.getElementById('cartModal').style.display = 'none';
-        }
-
-        function sendCartCloud() {
-            if(!currentBranchId) return alert("الرجاء اختيار الفرع من أعلى الشاشة أولاً!");
-            
-            let method = document.querySelector('input[name="recv-method"]:checked').value;
-            let phone = document.getElementById('cust-phone').value.trim();
-            let addr = document.getElementById('cust-address').value.trim();
-            let name = document.getElementById('cust-name').value.trim();
-
-            if(method === 'delivery' && (!name || !phone || !addr)) return alert("الرجاء إكمال بيانات التوصيل!");
-
-            currentOrderId = Math.floor(1000 + Math.random() * 9000); 
-            let total = myCart.reduce((s,i)=>s+(i.price*i.qty),0);
-            
-            let orderData = {
-                id: currentOrderId, status: 'pending', rejectReason: '', timestamp: firebase.database.ServerValue.TIMESTAMP,
-                customer: { name: name || 'زبون', phone: phone || 'غير مدرج', method: method, address: addr || 'لا يوجد' },
-                items: myCart, totalAmount: total
-            };
-
-            document.getElementById('cartModal').style.display = 'none';
-            showWaitingModal("⏳ جاري مراجعة طلبك...", "ننتظر تأكيد موظف الفرع لتوافر الأصناف.", true);
-
-            let orderRef = dbCloud.ref(ROOT_PATH + 'Live_Orders/' + currentBranchId + '/' + currentOrderId);
-            orderRef.set(orderData).then(() => {
-                orderRef.on('value', (snap) => { if(snap.exists()) handleOrderDecision(snap.val()); });
-            }).catch(e => { alert("حدث خطأ في الاتصال."); closeWaitingModal(); });
-        }
-
-        function showWaitingModal(title, desc, showSpinner) {
-            document.getElementById('waiting-modal').style.display = 'flex';
-            document.getElementById('waiting-spinner').style.display = showSpinner ? 'block' : 'none';
-            document.getElementById('waiting-title').innerText = title;
-            document.getElementById('waiting-desc').innerText = desc;
-            
-            document.getElementById('btn-contact-cs').style.display = 'none';
-            document.getElementById('btn-close-waiting').style.display = 'none';
-            document.getElementById('btn-new-order').style.display = 'none';
-        }
-
-        function closeWaitingModal() { document.getElementById('waiting-modal').style.display = 'none'; }
-
-        function handleOrderDecision(data) {
-            if(data.status === 'accepted') {
-                showWaitingModal("👨‍🍳 تم قبول الطلب!", "طلبك قيد التجهيز الآن. (رقم: " + data.id + ")", true);
-            } else if (data.status === 'completed') {
-                let msg = data.customer.method === 'delivery' ? "طلبك مع المندوب وفي الطريق إليك! 🛵" : "طلبك جاهز! تفضل لاستلامه. 🚶‍♂️";
-                showWaitingModal("🎉 طلبك جاهز!", msg + "\\n(رقم: " + data.id + ")", false);
-                document.getElementById('btn-contact-cs').style.display = 'block';
-                document.getElementById('btn-new-order').style.display = 'block';
-                myCart = []; updateCartUI();
-            } else if (data.status === 'rejected') {
-                showWaitingModal("❌ نعتذر منك", "تعذر تنفيذ الطلب. السبب: " + (data.rejectReason || "ضغط عمل."), false);
-                document.getElementById('btn-close-waiting').style.display = 'block'; 
-            }
-        }
-
-        function contactSupport() { window.open("https://wa.me/" + currentBranchPhone + "?text=استفسار بخصوص الطلب رقم: " + currentOrderId, "_blank"); }
-    <\/script>
-</body>
-</html>`;
-
-            let blob = new Blob([menuHTML], { type: "text/html;charset=utf-8" });
-            saveAs(blob, "Menu_Client_" + currentCompanyId + ".html");
         }
     </script>
 </body>
