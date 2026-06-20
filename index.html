@@ -39,6 +39,10 @@
         .card-price { color: #d35400; font-weight: bold; font-size: 16px; margin-bottom: 10px; }
         .order-btn { background: var(--secondary); color: var(--primary); border: none; padding: 8px; width: 100%; border-radius: 6px; font-family: 'Cairo'; font-weight: bold; cursor: pointer; }
         
+        /* زر عرض المزيد المتناسق مع الهوية البصرية للفايدي */
+        .btn-load-more { display: none; background: var(--primary); color: var(--secondary); border: 2px solid var(--secondary); padding: 10px 30px; border-radius: 25px; font-family: 'Cairo'; font-weight: bold; font-size: 15px; margin: 20px auto; cursor: pointer; transition: 0.2s; text-align: center; }
+        .btn-load-more:hover { background: var(--secondary); color: var(--primary); }
+
         .cart-float { position: fixed; bottom: 20px; left: 20px; background: var(--primary); color: var(--secondary); padding: 12px 20px; border-radius: 30px; display: none; cursor: pointer; z-index: 999; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         #cartModal, #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; }
@@ -57,13 +61,15 @@
 
     <div id="loading-screen">
         <div class="loader"></div>
-        <h3 style="color:var(--primary); margin-top:15px; font-weight:900;">⏳ جاري دفق قائمة الأصناف سحابياً...</h3>
+        <h3 style="color:var(--primary); margin-top:15px; font-weight:900;">⏳ جاري تحضير قائمة الأصناف...</h3>
     </div>
 
     <div class="top-bar" id="menu-header"></div>
     <div class="filter-container" id="catButtonsContainer"></div>
     <div id="dormant-msg" class="dormant-msg">الرجاء اختيار الفرع الأقرب إليك من الأعلى لعرض الأصناف 👆</div>
     <div class="grid dormant" id="menu-grid"></div>
+
+    <button id="load-more-btn" class="btn-load-more" onclick="loadNextChunk()">👇 عرض المزيد من الأصناف</button>
 
     <div class="cart-float" id="cartFloat" onclick="openCartModal()">🛒 السلة (<span id="cartBadge">0</span>)</div>
 
@@ -124,10 +130,14 @@
         let currentBranchPhone = null; 
         let myCart = []; 
         let currentOrderId = null;
-        let menuItemsGlobal = [];
+        
+        // متغيرات التحكم في خوارزمية التجزئة السحابية
+        let lastKey = null;
+        const CHUNK_SIZE = 16; 
+        let loadingMore = false;
         let uniqueCategories = new Set();
 
-        // جلب الإعدادات والهوية البصرية الأولية
+        // جلب الإعدادات والملف البصري للشركة أولاً (خفيف وسريع جداً)
         dbCloud.ref(ROOT_PATH + 'settings').once('value').then(snap => {
             if(snap.exists()) {
                 let settings = snap.val();
@@ -150,27 +160,56 @@
                 headerHTML += `<select id="customerBranchSelect" onchange="activateMenu(this)">${branchOptions}</select>`;
                 document.getElementById('menu-header').innerHTML = headerHTML;
 
-                startStreamingItems();
+                // استدعاء الشحنة الأولى المحدودة آلياً عند الإقلاع
+                loadNextChunk();
             }
         });
 
-        // دالة الدفق لمعالجة مشكلة الجمود والاختناق
-        function startStreamingItems() {
-            let itemsRef = dbCloud.ref(ROOT_PATH + 'items');
+        // خوارزمية جلب البيانات المجزأة والمقاومة للجمود
+        function loadNextChunk() {
+            if (loadingMore) return;
+            loadingMore = true;
             
-            // استقبال الأصناف تدفقياً ورسمها فوراً
-            itemsRef.on('child_added', (snapshot) => {
-                let item = snapshot.val();
-                if (item && item.selectedForMenu !== false) {
-                    menuItemsGlobal.push(item);
-                    renderSingleItem(item);
-                    updateCategoryButtons(item.cat);
+            // تهيئة استعلام مجزأ يعتمد على ترتيب المفاتيح وبحد أقصى 16 صنفاً فقط
+            let query = dbCloud.ref(ROOT_PATH + 'items').orderByKey().limitToFirst(CHUNK_SIZE);
+            
+            // في حال وجود مؤشر سابق، يبدأ الاستعلام بالتحرك من بعد آخر مفتاح تم قراءته
+            if (lastKey) {
+                query = dbCloud.ref(ROOT_PATH + 'items').orderByKey().startAfter(lastKey).limitToFirst(CHUNK_SIZE);
+            }
+            
+            query.once('value').then(snap => {
+                if (snap.exists()) {
+                    let itemsObj = snap.val();
+                    let keys = Object.keys(itemsObj);
+                    
+                    // تحديث مؤشر البحث البرمجي لأجل الشحنة القادمة
+                    lastKey = keys[keys.length - 1];
+                    
+                    let itemsArray = Object.values(itemsObj);
+                    itemsArray.forEach(item => {
+                        if (item && item.selectedForMenu !== false) {
+                            renderSingleItem(item);
+                            updateCategoryButtons(item.cat);
+                        }
+                    });
+                    
+                    // إخفاء شاشة التحميل فوراً عند معالجة أول 16 صنفاً (تستغرق أجزاء من الثانية)
+                    document.getElementById('loading-screen').style.display = 'none';
+                    
+                    // التحكم البرمجي في ظهور زر "عرض المزيد"
+                    document.getElementById('load-more-btn').style.display = keys.length < CHUNK_SIZE ? 'none' : 'block';
+                } else {
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.getElementById('load-more-btn').style.display = 'none';
+                    if (!lastKey) {
+                        document.getElementById('menu-grid').innerHTML = "<h3 style='text-align:center; color:var(--primary); width:100%;'>لا توجد أصناف معروضة حالياً</h3>";
+                    }
                 }
-            });
-
-            // إخفاء شاشة التحميل بعد انتهاء تدفق الحزمة الأولية بالكامل
-            itemsRef.once('value', () => {
-                document.getElementById('loading-screen').style.display = 'none';
+                loadingMore = false;
+            }).catch(err => {
+                console.error("خطأ تقني أثناء جلب الحزمة المعزولة:", err);
+                loadingMore = false;
             });
         }
 
@@ -178,7 +217,6 @@
             let grid = document.getElementById('menu-grid');
             let card = document.createElement('div');
             card.className = 'card';
-            card.setAttribute('data-id', item.id);
             card.setAttribute('data-category', item.cat);
             
             let imgData = item.img || 'https://via.placeholder.com/350x220?text=بدون+صورة';
@@ -295,7 +333,7 @@
             
             let orderData = {
                 id: currentOrderId, status: 'pending', rejectReason: '', timestamp: firebase.database.ServerValue.TIMESTAMP,
-                customer: { name: name || 'زبون', phone: phone || 'غير مدرج', method: method, address: addr || 'لا يوجد' },
+                customer: { name: name || 'زبون', phone: phone || 'غير درج', method: method, address: addr || 'لا يوجد' },
                 items: myCart, totalAmount: total
             };
 
