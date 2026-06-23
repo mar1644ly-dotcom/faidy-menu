@@ -2,235 +2,241 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تتبع طلبات الفايدي - البث الحي</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <title>نظام التتبع اللحظي - حلواني الفايدي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- مكتبات فايربيز -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- مكتبة الخرائط المجانية Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+        body { font-family: 'Cairo', sans-serif; margin: 0; padding: 0; background: #fdfbf7; height: 100vh; display: flex; flex-direction: column; }
+        .header { background: #004d4d; color: #EEDC82; padding: 15px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; position: relative; }
+        .header h1 { margin: 0; font-size: 18px; font-weight: 900; }
         
-        body { font-family: 'Cairo', sans-serif; background-color: #fdfbf7; margin: 0; padding: 0; text-align: center; }
-        
-        .header { background: #800000; color: #EEDC82; padding: 15px; font-weight: 900; font-size: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        
-        #role-selection { margin-top: 50px; display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 20px; }
-        
-        .input-order { padding: 12px; border: 2px solid #D4AF37; border-radius: 8px; font-family: 'Cairo'; font-size: 16px; font-weight: bold; width: 80%; max-width: 300px; text-align: center; outline: none; }
-        .input-order:focus { border-color: #800000; }
-
-        .btn { padding: 15px 30px; border: none; border-radius: 10px; font-family: 'Cairo'; font-size: 18px; font-weight: bold; cursor: pointer; width: 80%; max-width: 300px; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .btn-driver { background: #27ae60; color: white; border: 2px solid #2ecc71; margin-top: 10px; }
-        .btn-driver:hover { background: #2ecc71; transform: scale(1.05); }
-        .btn-customer { background: #2980b9; color: white; border: 2px solid #3498db; margin-top: 10px;}
-        .btn-customer:hover { background: #3498db; transform: scale(1.05); }
-        .btn-stop { background: #c0392b; color: white; margin-top: 20px; display: none; }
-
         /* شاشة المندوب */
-        #driver-screen { display: none; padding: 20px; margin-top: 20px; }
-        .status-box { background: white; border: 2px dashed #D4AF37; padding: 20px; border-radius: 12px; margin: 20px auto; max-width: 400px; font-weight: bold; color: #800000; }
-        .pulse { animation: pulseAnim 1.5s infinite alternate; color: #27ae60; font-size: 20px; }
-        @keyframes pulseAnim { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+        #driver-view { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+        .status-pulse { width: 100px; height: 100px; border-radius: 50%; background: #27ae60; display: flex; align-items: center; justify-content: center; color: white; font-size: 40px; margin-bottom: 20px; animation: pulse 1.5s infinite alternate; box-shadow: 0 0 20px rgba(39, 174, 96, 0.5); }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.1); opacity: 0.8; } }
+        .btn-stop { background: #e74c3c; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-family: 'Cairo'; font-weight: bold; font-size: 18px; cursor: pointer; margin-top: 30px; }
 
-        /* شاشة الزبون */
-        #customer-screen { display: none; padding: 10px; }
-        #map { height: 75vh; width: 100%; max-width: 800px; margin: 0 auto; border: 4px solid #D4AF37; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1; }
-        .customer-info { background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; max-width: 800px; margin: 10px auto; font-weight: bold; color: #333; }
+        /* شاشة الزبون (الخريطة) */
+        #customer-view { display: none; flex: 1; position: relative; }
+        #map { width: 100%; height: 100%; z-index: 1; }
         
-        .map-marker-icon { font-size: 35px; text-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
-        .order-tag { display: inline-block; background: #EEDC82; color: #800000; padding: 2px 10px; border-radius: 15px; font-size: 14px; margin-bottom: 10px; }
+        .order-info-overlay { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: white; padding: 15px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); z-index: 1000; width: 90%; max-width: 350px; border-bottom: 4px solid #004d4d; text-align: center; }
+        .order-info-overlay h3 { margin: 0 0 5px 0; color: #004d4d; font-size: 16px; }
+        .badge { background: #3498db; color: white; padding: 3px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        
+        #loading-screen { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #004d4d; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .driver-login { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; box-sizing: border-box; text-align: center;}
+        .login-input { padding: 12px; border-radius: 8px; border: 2px solid #004d4d; font-family: 'Cairo'; font-size: 16px; margin-bottom: 15px; width: 100%; max-width: 300px; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="header">حلواني أبناء الفايدي - البث الحي للتوصيل</div>
-
-    <div id="role-selection">
-        <h3 style="color:#800000; margin-bottom:5px;">رقم الطلب (أو الفاتورة):</h3>
-        <input type="text" id="manual-order-id" class="input-order" placeholder="أدخل رقم الطلب هنا...">
-        <button class="btn btn-driver" onclick="startManual('driver')">🛵 بدء التوصيل (للمندوب)</button>
-        <button class="btn btn-customer" onclick="startManual('customer')">📱 تتبع الطلب (للزبون)</button>
+    <div class="header">
+        <h1 id="header-title">نظام التتبع اللحظي 🛵</h1>
     </div>
 
-    <div id="driver-screen">
-        <h2 style="color:#27ae60; margin-bottom:5px;">واجهة مندوب التوصيل</h2>
-        <div class="order-tag" id="driver-order-display">الطلب: غير محدد</div>
-        <div class="status-box" id="driver-status">
-            جاهز للانطلاق. اضغط على الزر لبدء بث الموقع للزبون.
-        </div>
-        <button class="btn btn-driver" id="btn-start" onclick="startTracking()">🚀 بدء التوصيل (مشاركة الـ GPS)</button>
-        <button class="btn btn-stop" id="btn-stop" onclick="stopTracking()">🛑 إنهاء التوصيل (الوصول للزبون)</button>
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <h3 style="color:#004d4d;">جاري الاتصال بالخوادم...</h3>
     </div>
 
-    <div id="customer-screen">
-        <h2 style="color:#2980b9; margin-bottom:5px;">خريطة التتبع المباشر</h2>
-        <div class="order-tag" id="customer-order-display">الطلب: غير محدد</div>
-        <div class="customer-info" id="customer-status">
-            جاري الاتصال بالسحابة... 📡
+    <!-- شاشة إدخال رقم الطلب للمندوب (تظهر إذا لم يكن هناك رابط مباشر) -->
+    <div id="driver-login" class="driver-login">
+        <h2 style="color:#004d4d;">بوابة المندوب</h2>
+        <p style="color:#666; font-size:14px; margin-bottom:20px;">الرجاء إدخال رقم الطلب لبدء بث موقعك للزبون</p>
+        <input type="number" id="order-id-input" class="login-input" placeholder="رقم الطلب (مثال: 4821)">
+        <button onclick="startDriverFromInput()" style="background:#27ae60; color:white; border:none; padding:12px 30px; border-radius:8px; font-family:'Cairo'; font-weight:bold; font-size:16px; cursor:pointer;">بدء التوصيل والبث 📍</button>
+    </div>
+
+    <!-- شاشة بث المندوب -->
+    <div id="driver-view">
+        <h2 style="color: #004d4d;">أنت الآن متصل 🟢</h2>
+        <p style="color: #666; font-weight: bold; margin-bottom: 30px;">جاري بث موقعك للزبون بشكل حي ومباشر. يرجى إبقاء هذه الشاشة مفتوحة أثناء القيادة.</p>
+        <div class="status-pulse">🛵</div>
+        <div style="background: #e8f8f5; padding: 10px 20px; border-radius: 8px; border: 1px solid #27ae60; font-weight: bold; color: #27ae60;">
+            إحداثياتك تصل للزبون بنجاح ✔️
         </div>
+        <button class="btn-stop" onclick="stopTracking()">🔴 إنهاء التوصيل (إيقاف البث)</button>
+    </div>
+
+    <!-- شاشة الزبون (الخريطة) -->
+    <div id="customer-view">
         <div id="map"></div>
+        <div class="order-info-overlay">
+            <h3>تتبع مسار طلبك اللحظي</h3>
+            <span class="badge" id="order-status-badge">جاري جلب الموقع...</span>
+        </div>
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBr-XVqipP8NBOakKQgYR4gfLyYaFDwqD8",
-            authDomain: "faidy-web-app.firebaseapp.com",
-            databaseURL: "https://faidy-web-app-default-rtdb.firebaseio.com",
-            projectId: "faidy-web-app",
-            storageBucket: "faidy-web-app.firebasestorage.app",
-            messagingSenderId: "425340022026",
-            appId: "1:425340022026:web:9342a7b3426a71fb9e1ef3"
-        };
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-        const dbTrack = firebase.database();
+        firebase.initializeApp({ databaseURL: "https://faidy-web-app-default-rtdb.firebaseio.com", projectId: "faidy-web-app" });
+        const dbCloud = firebase.database();
+        const ROOT_PATH = 'FAIDY_OMS_V2/';
         
-        let CURRENT_ORDER_ID = null;
+        const urlParams = new URLSearchParams(window.location.search);
+        let userRole = urlParams.get('role'); // 'driver' أو 'customer'
+        let orderId = urlParams.get('id');
+        
+        let targetBranchId = null;
         let watchId = null;
         let map = null;
         let driverMarker = null;
-        let wakeLock = null; // متغير الشاشة النشطة
 
-        // ---------- الذكاء في قراءة الرابط ---------- //
-        window.onload = () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const roleParam = urlParams.get('role');
-            const idParam = urlParams.get('id');
-
-            if (roleParam && idParam) {
-                CURRENT_ORDER_ID = "Order_" + idParam;
-                document.getElementById('role-selection').style.display = 'none';
-                
-                if (roleParam === 'driver') {
-                    document.getElementById('driver-order-display').innerText = "الطلب رقم: " + idParam;
-                    document.getElementById('driver-screen').style.display = 'block';
-                } else if (roleParam === 'customer') {
-                    document.getElementById('customer-order-display').innerText = "الطلب رقم: " + idParam;
-                    document.getElementById('customer-screen').style.display = 'block';
-                    initMap();
-                    listenToDriverLocation();
-                }
-            }
-        };
-
-        function startManual(role) {
-            const inputVal = document.getElementById('manual-order-id').value.trim();
-            if (!inputVal) { alert("الرجاء إدخال رقم الطلب أولاً!"); return; }
-            
-            // إعادة توجيه المتصفح لتنظيف الرابط وإضافة المتغيرات
-            window.location.href = `?role=${role}&id=${inputVal}`;
-        }
-
-        // ---------- أكواد منع انطفاء الشاشة (Wake Lock API) ---------- //
-        async function requestWakeLock() {
-            try {
-                if ('wakeLock' in navigator) {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                    console.log('✅ تم تفعيل وضع الشاشة النشطة (لن تنطفئ الشاشة).');
-                    
-                    wakeLock.addEventListener('release', () => {
-                        console.log('❌ تم إيقاف وضع الشاشة النشطة.');
-                    });
-                }
-            } catch (err) {
-                console.error(`خطأ في Wake Lock: ${err.message}`);
-            }
-        }
-
-        // إعادة تفعيل الشاشة إذا قام المندوب بتصغير المتصفح ثم فتحه مجدداً
-        document.addEventListener('visibilitychange', async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible') {
-                await requestWakeLock();
-            }
+        // أيقونة المندوب المخصصة
+        const bikeIcon = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/3112/3112836.png', // أيقونة دراجة نارية مجانية
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
         });
 
-        // ---------- أكواد المندوب (الإرسال) ---------- //
-        async function startTracking() {
-            if (!navigator.geolocation) {
-                alert("جهازك لا يدعم تحديد الموقع (GPS)."); return;
+        window.onload = () => {
+            if(!userRole && !orderId) {
+                // إذا فتح المندوب الرابط بدون إضافات، نظهر له شاشة الإدخال
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('driver-login').style.display = 'flex';
+                return;
+            }
+            
+            if(!orderId) {
+                alert("رابط غير صالح. مفقود رقم الطلب.");
+                return;
             }
 
-            // تفعيل الشاشة النشطة
-            await requestWakeLock();
+            findOrderAcrossBranches(orderId);
+        };
 
-            document.getElementById('driver-status').innerHTML = "جاري الاتصال بالأقمار الصناعية... ⏳";
+        function startDriverFromInput() {
+            let id = document.getElementById('order-id-input').value.trim();
+            if(!id) return alert("أدخل رقم الطلب");
+            orderId = id;
+            userRole = 'driver';
+            document.getElementById('driver-login').style.display = 'none';
+            document.getElementById('loading-screen').style.display = 'flex';
+            findOrderAcrossBranches(orderId);
+        }
 
+        // دالة للبحث عن الطلب في كل الفروع
+        function findOrderAcrossBranches(id) {
+            dbCloud.ref(ROOT_PATH + 'Live_Orders').once('value').then(snap => {
+                if(!snap.exists()) return showError("لا توجد طلبات نشطة في النظام.");
+                
+                let allBranches = snap.val();
+                for(let branch in allBranches) {
+                    if(allBranches[branch][id]) {
+                        targetBranchId = branch;
+                        break;
+                    }
+                }
+
+                if(!targetBranchId) return showError("الطلب رقم (" + id + ") غير موجود أو تم إغلاقه.");
+                
+                document.getElementById('loading-screen').style.display = 'none';
+                
+                if(userRole === 'driver') initDriverView();
+                else if(userRole === 'customer') initCustomerView();
+                else showError("دور مستخدم غير معروف.");
+                
+            }).catch(e => showError("فشل الاتصال بقاعدة البيانات."));
+        }
+
+        function showError(msg) {
+            document.getElementById('loading-screen').style.display = 'none';
+            alert(msg);
+        }
+
+        // ==========================================
+        // نظام المندوب (Driver View)
+        // ==========================================
+        function initDriverView() {
+            document.getElementById('driver-view').style.display = 'flex';
+            document.getElementById('header-title').innerText = "بث الموقع 🛵";
+
+            if (!navigator.geolocation) {
+                alert("متصفحك لا يدعم تحديد الموقع!");
+                return;
+            }
+
+            // طلب الموقع وتحديثه باستمرار
             watchId = navigator.geolocation.watchPosition(
-                function(position) {
+                (position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
-                    const speed = position.coords.speed || 0; 
                     
-                    dbTrack.ref('Live_Tracking/' + CURRENT_ORDER_ID).set({
+                    // إرسال الإحداثيات لفايربيز داخل مسار الطلب
+                    dbCloud.ref(ROOT_PATH + 'Live_Orders/' + targetBranchId + '/' + orderId + '/location').set({
                         lat: lat,
                         lng: lng,
-                        speed: speed,
-                        timestamp: Date.now(),
-                        status: 'on_the_way'
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
                     });
-
-                    document.getElementById('driver-status').innerHTML = `<div class="pulse">📡 البث يعمل بقوة... يتم إرسال موقعك.</div><br><span style="font-size:12px; color:#555;">لا تقم بإغلاق هذه الصفحة حتى تصل.</span>`;
-                    document.getElementById('btn-start').style.display = 'none';
-                    document.getElementById('btn-stop').style.display = 'block';
                 },
-                function(error) {
-                    document.getElementById('driver-status').innerHTML = "❌ خطأ في الـ GPS: " + error.message;
+                (error) => {
+                    alert("الرجاء تفعيل الـ GPS والسماح للمتصفح بمعرفة موقعك لبدء البث.");
                 },
-                { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         }
 
         function stopTracking() {
-            if (watchId) navigator.geolocation.clearWatch(watchId);
-            dbTrack.ref('Live_Tracking/' + CURRENT_ORDER_ID).update({ status: 'delivered', timestamp: Date.now() });
-            
-            if (wakeLock !== null) { wakeLock.release(); wakeLock = null; } // تحرير الشاشة
-
-            document.getElementById('driver-status').innerHTML = "🎉 تمت المهمة! تم إيقاف البث بنجاح.";
-            document.getElementById('btn-start').style.display = 'block';
-            document.getElementById('btn-stop').style.display = 'none';
+            if(watchId) navigator.geolocation.clearWatch(watchId);
+            dbCloud.ref(ROOT_PATH + 'Live_Orders/' + targetBranchId + '/' + orderId).update({ status: 'delivered' });
+            alert("تم إيقاف البث بنجاح. شكراً لك!");
+            window.location.reload();
         }
 
-        // ---------- أكواد الزبون (الاستقبال والخريطة) ---------- //
-        function initMap() {
-            map = L.map('map').setView([32.1167, 20.0667], 13);
+        // ==========================================
+        // نظام الزبون (Customer View)
+        // ==========================================
+        function initCustomerView() {
+            document.getElementById('customer-view').style.display = 'block';
+            
+            // تهيئة خريطة OpenStreetMap
+            map = L.map('map').setView([32.1166, 20.0666], 13); // إحداثيات مبدئية لمدينة بنغازي
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; الفايدي لتتبع الطلبات',
-                maxZoom: 19
+                attribution: '© OpenStreetMap contributors'
             }).addTo(map);
 
-            const bikeIcon = L.divIcon({
-                html: '<div class="map-marker-icon">🛵</div>',
-                className: 'dummy',
-                iconSize: [40, 40],
-                iconAnchor: [20, 40]
+            let locRef = dbCloud.ref(ROOT_PATH + 'Live_Orders/' + targetBranchId + '/' + orderId + '/location');
+            
+            // الاستماع الحي لتحركات المندوب من فايربيز
+            locRef.on('value', snap => {
+                if(snap.exists()) {
+                    let loc = snap.val();
+                    let newLatLng = new L.LatLng(loc.lat, loc.lng);
+                    
+                    if(!driverMarker) {
+                        // إنشاء الماركر لأول مرة وتوسيط الخريطة عليه
+                        driverMarker = L.marker(newLatLng, {icon: bikeIcon}).addTo(map);
+                        map.setView(newLatLng, 16);
+                        document.getElementById('order-status-badge').innerText = "المندوب في طريقه إليك 🛵";
+                        document.getElementById('order-status-badge').style.background = "#27ae60";
+                    } else {
+                        // تحريك الماركر بسلاسة للموقع الجديد
+                        driverMarker.setLatLng(newLatLng);
+                        map.panTo(newLatLng);
+                    }
+                } else {
+                    document.getElementById('order-status-badge').innerText = "ننتظر بدء المندوب للرحلة...";
+                    document.getElementById('order-status-badge').style.background = "#f39c12";
+                }
             });
 
-            driverMarker = L.marker([32.1167, 20.0667], {icon: bikeIcon}).addTo(map);
-        }
-
-        function listenToDriverLocation() {
-            dbTrack.ref('Live_Tracking/' + CURRENT_ORDER_ID).on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data && data.lat && data.lng) {
-                    
-                    if(data.status === 'delivered') {
-                        document.getElementById('customer-status').innerHTML = "🎉 وصل المندوب! صحتين وعافية.";
-                        document.getElementById('customer-status').style.color = "#27ae60";
-                        return;
-                    }
-
-                    const newLatLng = new L.LatLng(data.lat, data.lng);
-                    driverMarker.setLatLng(newLatLng);
-                    map.panTo(newLatLng, {animate: true, duration: 1});
-
-                    let speedKm = (data.speed * 3.6).toFixed(1);
-                    document.getElementById('customer-status').innerHTML = `🛵 طلبك في الطريق الآن... (السرعة: ${speedKm > 0 ? speedKm : 0} كم/س)`;
-                } else {
-                    document.getElementById('customer-status').innerHTML = "الطلب قيد التجهيز أو المندوب لم ينطلق بعد... ⏳";
+            // مراقبة حالة الطلب لاكتشاف إذا وصل
+            dbCloud.ref(ROOT_PATH + 'Live_Orders/' + targetBranchId + '/' + orderId + '/status').on('value', snap => {
+                if(snap.exists() && snap.val() === 'delivered') {
+                    document.getElementById('order-status-badge').innerText = "🎉 تم توصيل الطلب بنجاح";
+                    document.getElementById('order-status-badge').style.background = "#8e44ad";
                 }
             });
         }
