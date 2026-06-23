@@ -2,548 +2,241 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>إدارة العمليات - لوحة الفرع السحابية</title>
+    <title>شاشة عمليات الفرع - حلواني الفايدي</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- مكتبات فايربيز -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
     <style>
-        /* المتغيرات اللونية الافتراضية (تتغير برمجياً بعد تسجيل الدخول) */
-        :root {
-            --primary: #1a252f;
-            --secondary: #3498db;
-            --bg: #e9ecef;
-        }
+        body { font-family: 'Cairo', sans-serif; background: #f4f7f6; margin: 0; padding: 0; }
+        .header { background: #004d4d; color: #EEDC82; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header h1 { margin: 0; font-size: 20px; font-weight: 900; }
+        
+        .login-section { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; }
+        .login-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; border-top: 5px solid #004d4d; }
+        .login-box select { width: 100%; padding: 12px; margin-top: 20px; border-radius: 8px; border: 2px solid #ccc; font-family: 'Cairo'; font-weight: bold; outline: none; font-size: 16px; }
+        .login-box button { width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px; border: none; background: #004d4d; color: white; font-family: 'Cairo'; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        .login-box button:hover { background: #EEDC82; color: #004d4d; }
 
-        body { font-family: 'Cairo', sans-serif; background-color: var(--bg); margin: 0; padding: 0; transition: background-color 0.5s ease; }
+        .dashboard { display: none; padding: 20px; }
+        .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
         
-        /* شاشة الدخول */
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; transition: background 0.5s ease; }
-        .login-box { background: white; padding: 40px; border-radius: 15px; text-align: center; color: #333; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .login-input { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #ccc; border-radius: 8px; font-family: 'Cairo'; font-weight: bold; text-align: center; box-sizing: border-box; outline: none; }
-        .login-input:focus { border-color: var(--secondary); }
-        .btn-login { background: var(--secondary); color: var(--primary); border: none; padding: 12px; width: 100%; border-radius: 8px; font-family: 'Cairo'; font-weight: 900; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
+        .order-card { background: white; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); border: 2px solid #eee; overflow: hidden; position: relative; animation: slideIn 0.5s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .order-card.pending { border-color: #e74c3c; box-shadow: 0 0 15px rgba(231, 76, 60, 0.3); }
+        .order-card.accepted { border-color: #f39c12; }
+        
+        .order-header { padding: 12px 15px; color: white; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+        .pending .order-header { background: #e74c3c; }
+        .accepted .order-header { background: #f39c12; }
+        
+        .order-body { padding: 15px; }
+        .customer-info { background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; border: 1px dashed #ccc; }
+        .customer-info span { font-weight: bold; color: #004d4d; }
+        
+        .items-list { list-style: none; padding: 0; margin: 0 0 15px 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .items-list li { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; font-weight: bold; }
+        
+        .total-price { text-align: left; font-size: 18px; font-weight: 900; color: #d35400; margin-bottom: 15px; }
+        
+        .actions { display: flex; gap: 10px; }
+        .btn-act { flex: 1; padding: 10px; border: none; border-radius: 6px; font-family: 'Cairo'; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; font-size: 14px; }
+        .btn-accept { background: #27ae60; }
+        .btn-reject { background: #c0392b; }
+        .btn-complete { background: #3498db; }
+        .btn-act:hover { filter: brightness(1.1); }
 
-        /* الشريط العلوي */
-        .top-bar { background: var(--primary); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; border-bottom: 3px solid var(--secondary); }
-        .brand-title { margin: 0; display: flex; align-items: center; max-height: 50px; }
-        .brand-title img { max-height: 45px; object-fit: contain; }
-        .top-actions { display: flex; gap: 10px; align-items: center; }
-        .btn-report-top { background: var(--secondary); color: var(--primary); border: none; padding: 8px 15px; border-radius: 6px; font-family: 'Cairo'; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .btn-logout { background: white; color: #e74c3c; border: none; padding: 8px 15px; border-radius: 6px; font-family: 'Cairo'; font-weight: bold; cursor: pointer; font-size: 14px; }
-        
-        /* الأعمدة */
-        .board-container { display: flex; gap: 20px; padding: 20px; height: calc(100vh - 90px); overflow-x: auto; align-items: flex-start; box-sizing: border-box; }
-        .board-column { flex: 1; min-width: 320px; background: white; border-radius: 12px; display: flex; flex-direction: column; max-height: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 2px solid transparent; }
-        .col-pending { border-color: #e74c3c; } .col-accepted { border-color: #f39c12; } .col-completed { border-color: #27ae60; }
-        
-        .column-header { padding: 15px; font-size: 18px; font-weight: 900; text-align: center; border-bottom: 1px solid #eee; border-radius: 10px 10px 0 0; color: white; }
-        .col-pending .column-header { background: #e74c3c; } .col-accepted .column-header { background: #f39c12; } .col-completed .column-header { background: #27ae60; }
-        
-        .column-body { flex: 1; padding: 15px; overflow-y: auto; background: #faf8f5; }
-        
-        /* بطاقات الطلبات */
-        .order-card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #ddd; border-right: 5px solid var(--primary); }
-        .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #ccc; padding-bottom: 5px; margin-bottom: 10px; }
-        .order-id { font-size: 20px; font-weight: 900; color: var(--primary); }
-        .customer-info { font-size: 14px; margin-bottom: 10px; background: #f0f2f5; padding: 8px; border-radius: 6px; }
-        .method-badge { background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; float: left; }
-        .order-item { display: flex; justify-content: space-between; font-size: 14px; border-bottom: 1px solid #eee; padding: 3px 0; font-weight: bold; }
-        .order-total { font-size: 16px; font-weight: 900; color: #d35400; margin-top: 10px; }
-        
-        .btn-row { display: flex; gap: 8px; margin-top: 12px; }
-        .btn-action { flex: 1; border: none; padding: 10px; border-radius: 6px; font-family: 'Cairo'; font-weight: bold; cursor: pointer; color: white; font-size: 14px; }
-        .btn-green { background: #27ae60; } .btn-red { background: #e74c3c; } .btn-blue { background: #2980b9; }
-
-        .close-shift-container { padding: 15px; background: white; border-top: 1px solid #eee; border-radius: 0 0 10px 10px; text-align: center; }
-        .btn-close-shift { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-family: 'Cairo'; font-weight: 900; cursor: pointer; font-size: 15px; border-bottom: 3px solid var(--secondary); }
-
-        /* نافذة الرفض/الإلغاء */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; }
-        .reject-option { display: block; margin-bottom: 10px; cursor: pointer; font-weight: bold; background: #fdfbf7; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
-        
-        /* نافذة التقارير */
-        #reports-modal .modal-content { max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto; }
-        .report-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px; }
-        .report-filters { background: #f0f2f5; padding: 15px; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 15px; font-weight: bold; }
-        .report-filters input[type="date"] { padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-family: 'Cairo'; font-weight: bold; outline: none; }
-        .dashboard-widgets { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-        .widget { flex: 1; min-width: 150px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .widget h4 { margin: 0 0 10px 0; color: #666; font-size: 14px; }
-        .widget .val { font-size: 24px; font-weight: 900; color: var(--primary); }
-        .widget.total-sales .val { color: #d35400; }
-        
-        .report-table-wrapper { overflow-x: auto; }
-        .report-table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: right; }
-        .report-table th, .report-table td { border: 1px solid #ddd; padding: 10px; }
-        .report-table th { background: var(--primary); color: white; border-bottom: 2px solid var(--secondary); }
-        .report-table tr:nth-child(even) { background-color: #f9f9f9; }
-
-        @media print {
-            body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; box-sizing: border-box; }
-            .no-print { display: none !important; }
-            .print-only { display: block !important; }
-        }
-        .print-only { display: none; }
-        .print-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-        .print-header img { max-height: 70px; object-fit: contain; margin-bottom: 5px; }
-        .print-header h2 { margin: 0 0 5px 0; font-size: 24px; }
-        .signature-area { margin-top: 50px; display: flex; justify-content: space-between; padding: 0 50px; font-weight: bold; }
+        .empty-state { text-align: center; color: #7f8c8d; font-weight: bold; padding: 50px; grid-column: 1 / -1; font-size: 18px; }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
+    <!-- التنبيه الصوتي للطلبات الجديدة -->
+    <audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+
+    <div class="header">
+        <h1>حلواني الفايدي - شاشة العمليات</h1>
+        <div id="branch-name-display" style="font-weight: bold; font-size: 14px;">الرجاء تسجيل الدخول</div>
+    </div>
+
+    <!-- شاشة اختيار الفرع -->
+    <div class="login-section" id="login-section">
         <div class="login-box">
-            <h2 style="color:var(--primary); margin-top:0;">بوابة تسجيل الفروع</h2>
-            <div style="font-size:13px; font-weight:bold; color:#666; margin-bottom:15px;">الخطوة 1: أدخل معرف الشركة</div>
-            <input type="text" id="comp-id-input" class="login-input" placeholder="معرف الشركة (مثال: faidy)" onkeypress="if(event.key === 'Enter') fetchCompanyBranches()">
-            <button class="btn-login" onclick="fetchCompanyBranches()">جلب الفروع</button>
-
-            <div id="branch-select-container" style="display:none; border-top:1px dashed #ccc; padding-top:15px; margin-top:10px;">
-                <div style="font-size:13px; font-weight:bold; color:#666; margin-bottom:10px;">الخطوة 2: اختر الفرع وسجل الدخول</div>
-                <select id="branch-select" class="login-input"><option value="">-- اختر الفرع --</option></select>
-                <input type="password" id="branch-pass" class="login-input" placeholder="الرقم السري للفرع" onkeypress="if(event.key === 'Enter') loginBranch()">
-                <button class="btn-login" style="background:#27ae60; color:white;" onclick="loginBranch()">تسجيل الدخول</button>
-            </div>
+            <h2 style="color: #004d4d; margin-top:0;">تسجيل دخول الفرع</h2>
+            <select id="branch-select">
+                <option value="" disabled selected>جاري تحميل الفروع...</option>
+            </select>
+            <button onclick="loginBranch()">دخول لِشاشة الاستقبال 🚀</button>
         </div>
     </div>
 
-    <div id="reject-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 style="color:#e74c3c; border-bottom:2px solid #e74c3c; padding-bottom:10px; margin-top:0;">سبب إلغاء الطلب #<span id="rej-id"></span></h3>
-            <label class="reject-option"><input type="radio" name="rej-reason" value="نفدت كمية أحد الأصناف المطلوبة."> نفاد الكمية</label>
-            <label class="reject-option"><input type="radio" name="rej-reason" value="ضغط عمل شديد في الفرع حالياً."> ضغط عمل شديد</label>
-            <label class="reject-option"><input type="radio" name="rej-reason" value="انتهاء وقت العمل."> انتهاء وقت العمل</label>
-            <label class="reject-option"><input type="radio" name="rej-reason" value="custom" onchange="document.getElementById('custom-rej').style.display='block'"> سبب آخر:</label>
-            <textarea id="custom-rej" style="width:100%; padding:8px; display:none; font-family:'Cairo'; margin-bottom:10px; box-sizing:border-box; outline:none;" placeholder="اكتب السبب..."></textarea>
-            <div style="display:flex; gap:10px; margin-top:15px;">
-                <button class="btn-action btn-red" onclick="confirmReject()">تأكيد الإلغاء</button>
-                <button class="btn-action" style="background:#777;" onclick="document.getElementById('reject-modal').style.display='none'">تراجع</button>
+    <!-- شاشة الطلبات الحية -->
+    <div class="dashboard" id="dashboard">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="color: #004d4d; margin: 0;">الطلبات النشطة (Live)</h2>
+            <div style="display:flex; gap:10px;">
+                <span style="background:#e74c3c; color:white; padding:5px 10px; border-radius:15px; font-size:12px; font-weight:bold;">قيد الانتظار: <span id="count-pending">0</span></span>
+                <span style="background:#f39c12; color:white; padding:5px 10px; border-radius:15px; font-size:12px; font-weight:bold;">قيد التجهيز: <span id="count-accepted">0</span></span>
             </div>
         </div>
-    </div>
-
-    <div id="reports-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="report-header">
-                <h2 style="margin:0; color:var(--primary); display:flex; align-items:center; gap:10px;" id="report-modal-title">📊 التقارير والأرشيف</h2>
-                <button class="btn-logout no-print" onclick="document.getElementById('reports-modal').style.display='none'">إغلاق ❌</button>
-            </div>
-
-            <div class="report-filters no-print">
-                <span>من تاريخ: <input type="date" id="date-from"></span>
-                <span>إلى تاريخ: <input type="date" id="date-to"></span>
-                <button class="btn-action btn-blue" style="width:auto; padding:8px 20px;" onclick="fetchReports()">🔍 عرض التقرير</button>
-                <button class="btn-action" style="background:#f39c12; width:auto; padding:8px 20px;" onclick="resetToToday()">🔄 مبيعات اليوم</button>
-                <button class="btn-action" style="background:#34495e; width:auto; padding:8px 20px;" onclick="printReport()">🖨️ طباعة</button>
-            </div>
-
-            <div id="print-area">
-                <div class="print-only print-header" id="print-header-content">
-                    <h2 id="print-company-name">اسم الشركة</h2>
-                    <h3 id="print-branch-name"></h3>
-                    <div style="font-size:14px; font-weight:normal;" id="print-period"></div>
-                </div>
-
-                <div class="dashboard-widgets">
-                    <div class="widget total-sales">
-                        <h4>إجمالي المبيعات المحصلة</h4>
-                        <div class="val" id="rep-total-sales">0.00 د.ل</div>
-                    </div>
-                    <div class="widget">
-                        <h4>الطلبات المنفذة</h4>
-                        <div class="val" id="rep-completed-count">0</div>
-                    </div>
-                    <div class="widget">
-                        <h4>الطلبات الملغاة</h4>
-                        <div class="val" id="rep-rejected-count" style="color:#e74c3c;">0</div>
-                    </div>
-                </div>
-
-                <h4 style="margin-bottom:10px; color:var(--primary);">قائمة تفاصيل الطلبات:</h4>
-                <div class="report-table-wrapper">
-                    <table class="report-table">
-                        <thead>
-                            <tr>
-                                <th>رقم الطلب</th>
-                                <th>الوقت</th>
-                                <th>اسم الزبون</th>
-                                <th>النوع</th>
-                                <th>الحالة</th>
-                                <th>الإجمالي (د.ل)</th>
-                                <th>ملاحظات / سبب الإلغاء</th>
-                            </tr>
-                        </thead>
-                        <tbody id="rep-table-body"></tbody>
-                    </table>
-                </div>
-
-                <div class="print-only signature-area">
-                    <div>توقيع الكاشير المحصل:<br>.........................</div>
-                    <div>اعتماد الإدارة:<br>.........................</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="main-dashboard" style="display:none;">
-        <div class="top-bar">
-            <div>
-                <div class="brand-title" id="display-company-name">اسم الشركة</div>
-                <div id="current-branch-name" style="font-weight:bold; font-size:13px; margin-top:4px; opacity:0.9; color:var(--secondary);"></div>
-            </div>
-            <div class="top-actions">
-                <button class="btn-report-top" onclick="openReportsModal()">📊 التقارير والأرشيف</button>
-                <button class="btn-logout" onclick="location.reload()">تسجيل خروج</button>
-            </div>
-        </div>
-
-        <div class="board-container">
-            <div class="board-column col-pending">
-                <div class="column-header">🔔 طلبات جديدة (<span id="count-pending">0</span>)</div>
-                <div class="column-body" id="col-pending-body"></div>
-            </div>
-            <div class="board-column col-accepted">
-                <div class="column-header">👨‍🍳 قيد التجهيز (<span id="count-accepted">0</span>)</div>
-                <div class="column-body" id="col-accepted-body"></div>
-            </div>
-            <div class="board-column col-completed">
-                <div class="column-header">📜 سجل الوردية (<span id="count-completed">0</span>)</div>
-                <div class="column-body" id="col-completed-body"></div>
-                <div class="close-shift-container">
-                    <button class="btn-close-shift" onclick="closeShift()">🔒 إنهاء الوردية والمطابقة</button>
-                </div>
-            </div>
+        <div class="orders-grid" id="orders-grid">
+            <!-- ستظهر الطلبات هنا -->
         </div>
     </div>
 
     <script>
+        // إعدادات فايربيز
         firebase.initializeApp({ databaseURL: "https://faidy-web-app-default-rtdb.firebaseio.com", projectId: "faidy-web-app" });
         const dbCloud = firebase.database();
+        const ROOT_PATH = 'FAIDY_OMS_V2/';
         
-        let currentCompanyId = '';
-        let ROOT_PATH = '';
-        let branches = []; 
-        let currentBranch = null; 
-        let orderToReject = null;
-        let lastPendingCount = 0;
-        
-        let companyName = '';
-        let companyLogoBase64 = ''; // 💡 حفظ كود الصورة دولياً للوحات والطباعة
+        let currentBranch = null;
+        let activeOrders = {};
 
-        function getLocalDateString(dObj) {
-            let d = new Date(dObj);
-            let month = '' + (d.getMonth() + 1); let day = '' + d.getDate(); let year = d.getFullYear();
-            if (month.length < 2) month = '0' + month; if (day.length < 2) day = '0' + day;
-            return [year, month, day].join('-');
-        }
-
-        function playAlertSound() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator(); const gain = ctx.createGain();
-                osc.type = 'bell'; osc.frequency.setValueAtTime(880, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5);
-                gain.gain.setValueAtTime(1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1);
-                osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 1);
-            } catch(e) {}
-        }
-
-        // جلب الفروع والهوية البصرية والشعار
-        function fetchCompanyBranches() {
-            currentCompanyId = document.getElementById('comp-id-input').value.trim().toLowerCase();
-            if(!currentCompanyId) return alert("الرجاء إدخال معرف الشركة أولاً.");
-
-            dbCloud.ref('OMS_SAAS_V1/Companies/' + currentCompanyId + '/settings').once('value').then(snap => {
+        // تحميل الفروع في شاشة الدخول
+        window.onload = () => {
+            dbCloud.ref('OMS_SAAS_V1/Companies/faidy/settings/branches').once('value').then(snap => {
+                let sel = document.getElementById('branch-select');
                 if(snap.exists()) {
-                    let data = snap.val();
-                    branches = data.branches || [];
-                    companyName = data.profile?.name || currentCompanyId;
-                    companyLogoBase64 = data.branding?.logo || ''; // 💡 سحب الشعار السحابي
-
-                    // تطبيق ألوان الـ SaaS
-                    if(data.branding) {
-                        document.documentElement.style.setProperty('--primary', data.branding.primaryColor);
-                        document.documentElement.style.setProperty('--secondary', data.branding.secondaryColor);
-                        document.documentElement.style.setProperty('--bg', data.branding.bgColor);
-                    }
-
-                    let sel = document.getElementById('branch-select');
-                    sel.innerHTML = '<option value="">-- اختر الفرع --</option>';
-                    branches.forEach(b => { if(b) sel.innerHTML += `<option value="${b.id}">${b.name}</option>`; });
-
-                    document.getElementById('branch-select-container').style.display = 'block';
+                    sel.innerHTML = '<option value="" disabled selected>-- اختر الفرع الخاص بك --</option>';
+                    snap.val().forEach(b => { if(b) sel.innerHTML += `<option value="${b.id}">${b.name}</option>`; });
                 } else {
-                    alert("المعرف غير صحيح أو الشركة غير مسجلة بالنظام.");
+                    sel.innerHTML = '<option value="">لا توجد فروع مسجلة</option>';
                 }
             });
-        }
+        };
 
-        // تسجيل دخول الكاشير والتحويل الهيكلي
         function loginBranch() {
-            let id = document.getElementById('branch-select').value;
-            let pass = document.getElementById('branch-pass').value.trim();
+            let sel = document.getElementById('branch-select');
+            if(!sel.value) return alert("الرجاء اختيار الفرع أولاً");
             
-            if(!id) return alert("الرجاء اختيار الفرع.");
-            if(!pass) return alert("الرجاء إدخال الرقم السري للفرع.");
+            currentBranch = sel.value;
+            let branchText = sel.options[sel.selectedIndex].text;
             
-            let b = branches.find(x => String(x.id) === String(id));
-            if(b && String(b.pass) === pass) {
-                currentBranch = b;
-                ROOT_PATH = 'OMS_SAAS_V1/Companies/' + currentCompanyId + '/';
-                
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-dashboard').style.display = 'block';
-                
-                // 💡 تخصيص الشعار/الاسم في شريط الكاشير الرئيسي
-                let brandTitleElem = document.getElementById('display-company-name');
-                if (companyLogoBase64) {
-                    brandTitleElem.innerHTML = `<img src="${companyLogoBase64}">`;
-                } else {
-                    brandTitleElem.innerText = companyName;
-                }
-                
-                document.getElementById('current-branch-name').innerText = "الفرع: " + b.name;
-                
-                playAlertSound(); 
-                listenForOrders();
-            } else alert("❌ الرقم السري غير صحيح!");
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('branch-name-display').innerText = "📍 فرع: " + branchText;
+            
+            // طلب إذن تشغيل الصوت من المتصفح (مهم جداً)
+            document.getElementById('alertSound').play().catch(e => console.log("المتصفح يمنع التشغيل التلقائي للصوت حتى يتفاعل المستخدم"));
+
+            startListeningToOrders();
         }
 
-        function listenForOrders() {
-            dbCloud.ref(ROOT_PATH + 'Live_Orders/' + currentBranch.id).on('value', snap => {
-                let pending = [], accepted = [], completed = [];
-                if(snap.exists()) {
-                    let all = snap.val();
-                    for(let k in all) {
-                        if(all[k].status === 'pending') pending.push(all[k]);
-                        else if(all[k].status === 'accepted') accepted.push(all[k]);
-                        else if(all[k].status === 'completed') completed.push(all[k]);
-                    }
-                }
-                
-                if(pending.length > lastPendingCount) playAlertSound();
-                lastPendingCount = pending.length;
+        function startListeningToOrders() {
+            let ordersRef = dbCloud.ref(ROOT_PATH + 'Live_Orders/' + currentBranch);
+            
+            // عند إضافة طلب جديد أو تحديث طلب موجود
+            ordersRef.on('value', snap => {
+                activeOrders = snap.val() || {};
+                renderOrders();
+            });
 
-                renderColumn('pending', pending);
-                renderColumn('accepted', accepted);
-                renderColumn('completed', completed);
+            // مراقبة الطلبات الجديدة فقط لإطلاق جرس التنبيه
+            ordersRef.on('child_added', snap => {
+                let order = snap.val();
+                if(order.status === 'pending') {
+                    playSound();
+                }
             });
         }
 
-        function renderColumn(status, ordersList) {
-            document.getElementById(`count-${status}`).innerText = ordersList.length;
-            const container = document.getElementById(`col-${status}-body`);
-            container.innerHTML = ordersList.length === 0 ? '<div style="text-align:center; color:#888; margin-top:20px; font-weight:bold;">لا توجد طلبات</div>' : '';
+        function playSound() {
+            let audio = document.getElementById('alertSound');
+            audio.currentTime = 0;
+            audio.play().catch(e => {});
+        }
 
-            ordersList.sort((a,b) => b.timestamp - a.timestamp).forEach(order => {
-                let d = new Date(order.timestamp);
-                let time = d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-                let method = order.customer.method === 'delivery' ? '🛵 توصيل' : '🚶 استلام';
-                let addressHtml = order.customer.address && order.customer.method === 'delivery' ? `<div style="font-size:12px; margin-top:5px;">📍 ${order.customer.address}</div>` : '';
+        function renderOrders() {
+            let grid = document.getElementById('orders-grid');
+            grid.innerHTML = '';
+            
+            let pendingCount = 0;
+            let acceptedCount = 0;
+            
+            let ordersArray = Object.values(activeOrders).sort((a,b) => b.timestamp - a.timestamp); // الأحدث أولاً
+            
+            if(ordersArray.filter(o => o.status === 'pending' || o.status === 'accepted').length === 0) {
+                grid.innerHTML = '<div class="empty-state">☕ لا توجد طلبات نشطة حالياً. الشاشة في وضع الاستعداد...</div>';
+            }
+
+            ordersArray.forEach(order => {
+                if(order.status === 'completed' || order.status === 'rejected') return; // لا نعرض الطلبات المنتهية هنا
+                
+                if(order.status === 'pending') pendingCount++;
+                if(order.status === 'accepted') acceptedCount++;
+
+                let timeString = new Date(order.timestamp).toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'});
+                
+                let methodLabel = order.customer.method === 'delivery' ? '🛵 توصيل' : '🚶‍♂️ استلام من الفرع';
                 
                 let itemsHtml = '';
-                order.items.forEach(i => { itemsHtml += `<div class="order-item"><span>${i.name}</span> <span style="color:var(--primary);">${i.qty}</span></div>`; });
+                order.items.forEach(item => {
+                    itemsHtml += `<li><span>${item.qty}x ${item.name}</span> <span>${(item.price * item.qty).toFixed(2)}</span></li>`;
+                });
 
-                let btnsHtml = '';
-                if(status === 'pending') {
-                    btnsHtml = `<div class="btn-row"><button class="btn-action btn-green" onclick="changeStatus(${order.id}, 'accepted')">✅ قبول وتجهيز</button><button class="btn-action btn-red" onclick="openReject(${order.id})">❌ إلغاء</button></div>`;
-                } else if (status === 'accepted') {
-                    btnsHtml = `<div class="btn-row"><button class="btn-action btn-blue" onclick="changeStatus(${order.id}, 'completed')">🚀 تم التجهيز / تسليم</button></div>`;
+                let buttonsHtml = '';
+                if(order.status === 'pending') {
+                    buttonsHtml = `
+                        <button class="btn-act btn-accept" onclick="updateOrderStatus(${order.id}, 'accepted')">✅ قبول (بدء التجهيز)</button>
+                        <button class="btn-act btn-reject" onclick="rejectOrder(${order.id})">❌ رفض الطلب</button>
+                    `;
+                } else if (order.status === 'accepted') {
+                    let completeText = order.customer.method === 'delivery' ? '🛵 تسليم للمندوب' : '📦 تسليم للزبون';
+                    buttonsHtml = `
+                        <button class="btn-act btn-complete" onclick="updateOrderStatus(${order.id}, 'completed')">${completeText}</button>
+                    `;
                 }
 
-                container.innerHTML += `
-                    <div class="order-card">
+                grid.innerHTML += `
+                    <div class="order-card ${order.status}">
                         <div class="order-header">
-                            <span class="order-id">#${order.id}</span>
-                            <span style="font-size:12px; color:#777;">⏰ ${time}</span>
+                            <span>طلب #${order.id}</span>
+                            <span>⏱️ ${timeString}</span>
                         </div>
-                        <div class="customer-info">
-                            <div style="font-weight:bold; color:#333;">👤 ${order.customer.name} <span class="method-badge">${method}</span></div>
-                            <div style="margin-top:5px; font-weight:bold;">📞 <a href="tel:${order.customer.phone}" style="text-decoration:none; color:var(--primary);">${order.customer.phone}</a></div>
-                            ${addressHtml}
+                        <div class="order-body">
+                            <div class="customer-info">
+                                <div><span>الاسم:</span> ${order.customer.name}</div>
+                                <div><span>الهاتف:</span> <a href="tel:${order.customer.phone}" style="color:#004d4d;">${order.customer.phone}</a></div>
+                                <div><span>الاستلام:</span> ${methodLabel}</div>
+                                ${order.customer.method === 'delivery' ? `<div style="margin-top:5px; color:#c0392b; font-weight:bold;">📍 العنوان: ${order.customer.address}</div>` : ''}
+                            </div>
+                            
+                            <ul class="items-list">
+                                ${itemsHtml}
+                            </ul>
+                            
+                            <div class="total-price">الإجمالي: ${order.totalAmount.toFixed(2)} د.ل</div>
+                            
+                            <div class="actions">
+                                ${buttonsHtml}
+                            </div>
                         </div>
-                        <div style="margin-bottom:10px;">${itemsHtml}</div>
-                        <div class="order-total">💰 ${order.totalAmount.toFixed(2)} د.ل</div>
-                        ${btnsHtml}
-                    </div>`;
+                    </div>
+                `;
+            });
+
+            document.getElementById('count-pending').innerText = pendingCount;
+            document.getElementById('count-accepted').innerText = acceptedCount;
+        }
+
+        function updateOrderStatus(orderId, newStatus) {
+            dbCloud.ref(ROOT_PATH + 'Live_Orders/' + currentBranch + '/' + orderId).update({
+                status: newStatus
             });
         }
 
-        function changeStatus(id, newStatus) {
-            dbCloud.ref(ROOT_PATH + 'Live_Orders/' + currentBranch.id + '/' + id).update({ status: newStatus });
-        }
-
-        function openReject(id) {
-            orderToReject = id;
-            document.getElementById('rej-id').innerText = id;
-            document.getElementById('custom-rej').style.display = 'none';
-            document.getElementById('reject-modal').style.display = 'flex';
-        }
-
-        function confirmReject() {
-            let r = document.querySelector('input[name="rej-reason"]:checked');
-            if(!r) return alert("الرجاء اختيار سبب الإلغاء.");
-            let reason = r.value === 'custom' ? document.getElementById('custom-rej').value : r.value;
-            if(r.value === 'custom' && !reason) return alert("الرجاء كتابة السبب.");
-            
-            dbCloud.ref(ROOT_PATH + 'Live_Orders/' + currentBranch.id + '/' + orderToReject).update({
-                status: 'rejected', rejectReason: reason
+        function rejectOrder(orderId) {
+            let reason = prompt("ما هو سبب الرفض؟ (سيظهر للزبون)");
+            if(reason === null) return; // تم الإلغاء
+            dbCloud.ref(ROOT_PATH + 'Live_Orders/' + currentBranch + '/' + orderId).update({
+                status: 'rejected',
+                rejectReason: reason || "نعتذر، ضغط عمل حالياً."
             });
-            document.getElementById('reject-modal').style.display = 'none';
-        }
-
-        function closeShift() {
-            if(confirm("تأكيد إنهاء الوردية؟ سيتم نقل الطلبات المكتملة لأرشيف الإدارة السحابي.")) {
-                dbCloud.ref(ROOT_PATH + 'Live_Orders/' + currentBranch.id).once('value').then(snap => {
-                    if(snap.exists()) {
-                        let updates = {}; let all = snap.val();
-                        
-                        for(let k in all) {
-                            if(all[k].status === 'completed' || all[k].status === 'rejected') {
-                                let orderDateStr = getLocalDateString(all[k].timestamp);
-                                dbCloud.ref(ROOT_PATH + 'Archives/' + currentBranch.id + '/' + orderDateStr + '/' + k).set(all[k]);
-                                updates[k] = null;
-                            }
-                        }
-                        return dbCloud.ref(ROOT_PATH + 'Live_Orders/' + currentBranch.id).update(updates);
-                    }
-                }).then(() => { alert("✅ تم إنهاء الوردية بنجاح وحفظ البيانات في الأرشيف."); });
-            }
-        }
-
-        // ================= نظام التقارير والطباعة بالشعار =================
-
-        function openReportsModal() {
-            resetToToday();
-            document.getElementById('reports-modal').style.display = 'flex';
-            
-            // 💡 تخصيص رأس الفاتورة المطبوعة باللوجو الحقيقي للشركة
-            let headerPrintContainer = document.getElementById('print-header-content');
-            let logoHtmlPrint = companyLogoBase64 ? `<img src="${companyLogoBase64}"><br>` : '';
-            headerPrintContainer.innerHTML = `
-                ${logoHtmlPrint}
-                <h2>${companyName}</h2>
-                <h3 id="print-branch-name-inner">الفرع: ${currentBranch.name}</h3>
-                <div style="font-size:14px; font-weight:normal;" id="print-period-inner"></div>
-            `;
-        }
-
-        function resetToToday() {
-            let today = getLocalDateString(new Date());
-            document.getElementById('date-from').value = today;
-            document.getElementById('date-to').value = today;
-            fetchReports();
-        }
-
-        function getDatesInRange(startDateStr, endDateStr) {
-            let start = new Date(startDateStr); let end = new Date(endDateStr);
-            let dates = [];
-            while (start <= end) {
-                dates.push(getLocalDateString(start));
-                start.setDate(start.getDate() + 1);
-            }
-            return dates;
-        }
-
-        function fetchReports() {
-            let fromStr = document.getElementById('date-from').value;
-            let toStr = document.getElementById('date-to').value;
-            if(!fromStr || !toStr) return alert("الرجاء تحديد النطاق الزمني.");
-
-            let periodText = `تقرير الفترة: من ${fromStr} إلى ${toStr}`;
-            let pi = document.getElementById('print-period-inner');
-            if(pi) pi.innerText = periodText;
-            
-            let datesToFetch = getDatesInRange(fromStr, toStr);
-            let archivePromises = datesToFetch.map(d => dbCloud.ref(ROOT_PATH + 'Archives/' + currentBranch.id + '/' + d).once('value'));
-            let livePromise = dbCloud.ref(ROOT_PATH + 'Live_Orders/' + currentBranch.id).once('value');
-
-            document.getElementById('rep-table-body').innerHTML = '<tr><td colspan="7" style="text-align:center;">جاري البحث وتحميل السجلات...</td></tr>';
-
-            Promise.all([...archivePromises, livePromise]).then(snapshots => {
-                let allFetchedOrders = [];
-                
-                for(let i = 0; i < archivePromises.length; i++) {
-                    if(snapshots[i].exists()) {
-                        let dayOrders = snapshots[i].val();
-                        for(let key in dayOrders) allFetchedOrders.push(dayOrders[key]);
-                    }
-                }
-                
-                let liveSnap = snapshots[snapshots.length - 1];
-                if(liveSnap.exists()) {
-                    let liveOrders = liveSnap.val();
-                    for(let key in liveOrders) {
-                        let order = liveOrders[key];
-                        if(order.status === 'completed' || order.status === 'rejected') {
-                            let orderDateStr = getLocalDateString(order.timestamp);
-                            if(datesToFetch.includes(orderDateStr)) {
-                                if(!allFetchedOrders.find(o => String(o.id) === String(order.id))) {
-                                    allFetchedOrders.push(order);
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                processAndRenderReports(allFetchedOrders);
-            }).catch(err => {
-                document.getElementById('rep-table-body').innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">حدث خطأ أثناء جلب البيانات.</td></tr>';
-            });
-        }
-
-        function processAndRenderReports(orders) {
-            let totalSales = 0; let completedCount = 0; let rejectedCount = 0;
-            let tbody = document.getElementById('rep-table-body');
-            tbody.innerHTML = '';
-
-            if(orders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; font-weight:bold;">لا توجد سجلات في هذا التاريخ.</td></tr>';
-                document.getElementById('rep-total-sales').innerText = "0.00 د.ل";
-                document.getElementById('rep-completed-count').innerText = "0";
-                document.getElementById('rep-rejected-count').innerText = "0";
-                return;
-            }
-
-            orders.sort((a,b) => b.timestamp - a.timestamp).forEach(order => {
-                if(order.status === 'completed') {
-                    completedCount++;
-                    totalSales += order.totalAmount;
-                } else if(order.status === 'rejected') {
-                    rejectedCount++;
-                }
-
-                let d = new Date(order.timestamp);
-                let timeStr = d.toLocaleDateString('ar-EG') + " " + d.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'});
-                let statusTxt = order.status === 'completed' ? '<span style="color:green;font-weight:bold;">منفذ</span>' : '<span style="color:red;font-weight:bold;">ملغي</span>';
-                let methodTxt = order.customer.method === 'delivery' ? 'توصيل' : 'استلام';
-                
-                let reasonTxt = order.status === 'rejected' ? (order.rejectReason || 'غير محدد') : '-';
-                let reasonHtml = order.status === 'rejected' ? `<span style="color:#e74c3c; font-size:12px; font-weight:bold;">${reasonTxt}</span>` : `<span style="color:#999;">-</span>`;
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td style="font-weight:bold;">#${order.id}</td>
-                        <td style="font-size:12px;">${timeStr}</td>
-                        <td>${order.customer.name}</td>
-                        <td>${methodTxt}</td>
-                        <td>${statusTxt}</td>
-                        <td style="font-weight:bold;">${order.totalAmount.toFixed(2)}</td>
-                        <td>${reasonHtml}</td>
-                    </tr>`;
-            });
-
-            document.getElementById('rep-total-sales').innerText = totalSales.toFixed(2) + " د.ل";
-            document.getElementById('rep-completed-count').innerText = completedCount;
-            document.getElementById('rep-rejected-count').innerText = rejectedCount;
-        }
-
-        function printReport() {
-            window.print();
         }
     </script>
 </body>
