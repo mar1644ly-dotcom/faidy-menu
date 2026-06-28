@@ -5,7 +5,6 @@
     <title>حلواني الفايدي - القائمة الذهبية</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- مكتبات فايربيز -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
@@ -15,6 +14,7 @@
         :root { 
             --gold: #D4AF37; 
             --gold-light: #f3d56a;
+            --primary: #800020; 
             --dark-bg: #0a0002; 
             --card-bg: #1a0508; 
             --text-light: #fdfbf7; 
@@ -125,17 +125,52 @@
             background: #111; 
             overflow: hidden; 
             position: relative;
-            cursor: pointer; /* مؤشر الماوس يدل على قابلية النقر */
+            cursor: pointer; 
         }
-        .image-container img { 
+        
+        .standard-img { 
             width: 100%; 
             height: 100%; 
             object-fit: cover; 
             transition: transform 0.7s ease;
         }
-        .card:hover .image-container img {
-            transform: scale(1.05); 
+        .card:hover .standard-img { transform: scale(1.05); }
+
+        .premium-plate-wrapper {
+            padding: 20px;
+            background: linear-gradient(135deg, #1a0508, #2a0810); 
+            display: flex; justify-content: center; align-items: center;
+            width: 100%; height: 100%; 
+            box-sizing: border-box;
+            transition: transform 0.7s ease;
         }
+        .premium-plate-img {
+            width: 220px; height: 220px; 
+            border-radius: 50%;
+            object-fit: cover;
+            border: 8px solid var(--primary); 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8), 0 0 0 3px var(--gold); 
+            background: #111;
+        }
+        .card:hover .premium-plate-wrapper { transform: scale(1.04); }
+
+        .premium-box-wrapper {
+            padding: 25px;
+            background: linear-gradient(135deg, #1a0508, #2a0810); 
+            display: flex; justify-content: center; align-items: center;
+            width: 100%; height: 100%; 
+            box-sizing: border-box;
+            transition: transform 0.7s ease;
+        }
+        .premium-box-img {
+            width: 100%; height: 100%;
+            border-radius: 12px; 
+            object-fit: cover;
+            border: 6px solid var(--primary); 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8), 0 0 0 3px var(--gold); 
+            background: #111;
+        }
+        .card:hover .premium-box-wrapper { transform: scale(1.04); }
         
         .card-details { 
             padding: 25px 20px; 
@@ -161,124 +196,70 @@
             font-weight: 300;
         }
         
-        .variant-item {
-            display: inline-block;
-            margin: 0 5px;
-        }
-        .variant-price {
-            color: var(--gold);
-            font-weight: 700;
-        }
+        .variant-item { display: inline-block; margin: 0 5px; }
+        .variant-price { color: var(--gold); font-weight: 700; }
 
         #loading-overlay { 
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100%; height: 100%; 
-            background: var(--dark-bg); 
-            z-index: 9999; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--dark-bg); z-index: 9999; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
         }
         .spinner { 
-            border: 3px solid rgba(212, 175, 55, 0.2); 
-            border-top: 3px solid var(--gold); 
-            border-radius: 50%; 
-            width: 60px; height: 60px; 
-            animation: spin 1s linear infinite; 
-            margin-bottom: 20px; 
+            border: 3px solid rgba(212, 175, 55, 0.2); border-top: 3px solid var(--gold); 
+            border-radius: 50%; width: 60px; height: 60px; 
+            animation: spin 1s linear infinite; margin-bottom: 20px; 
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* ---------------- التصميم السينمائي للصورة (Lightbox) ---------------- */
         .lightbox {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 0, 2, 0.85); /* خلفية داكنة جداً مع شفافية */
-            backdrop-filter: blur(15px); /* عزل الشاشة بضبابية */
-            z-index: 100000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s ease;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 0, 2, 0.85); backdrop-filter: blur(15px); 
+            z-index: 100000; display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
+            cursor: pointer; /* مؤشر النقر للإغلاق */
         }
-        .lightbox.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
+        .lightbox.active { opacity: 1; pointer-events: auto; }
         .lightbox-content {
-            text-align: center;
-            position: relative;
-            transform: scale(0.8);
+            text-align: center; position: relative; transform: scale(0.8);
             transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            max-width: 90%;
-            width: 600px;
+            max-width: 90%; width: 600px;
         }
-        .lightbox.active .lightbox-content {
-            transform: scale(1);
-        }
-        /* الهالة الذهبية النابضة خلف الصورة */
+        .lightbox.active .lightbox-content { transform: scale(1); }
         .lightbox-glow {
-            position: absolute;
-            top: 40%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80%; height: 60%;
-            background: var(--gold);
-            filter: blur(100px);
-            opacity: 0;
-            z-index: -1;
-            animation: pulseGlow 3s infinite alternate;
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            width: 80%; height: 60%; background: var(--gold); filter: blur(100px);
+            opacity: 0; z-index: -1; animation: pulseGlow 3s infinite alternate;
         }
-        .lightbox.active .lightbox-glow {
-            opacity: 0.3;
-        }
+        .lightbox.active .lightbox-glow { opacity: 0.3; }
         @keyframes pulseGlow {
             0% { transform: translate(-50%, -50%) scale(0.9); }
             100% { transform: translate(-50%, -50%) scale(1.1); }
         }
         .lightbox img {
-            max-width: 100%;
-            max-height: 55vh;
-            object-fit: contain; /* للمحافظة على أبعاد الصنف بالكامل دون قص */
-            border-radius: 16px;
-            border: 2px solid var(--gold);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.9);
-            margin-bottom: 25px;
+            max-width: 100%; max-height: 55vh; object-fit: contain; 
+            border-radius: 16px; border: 2px solid var(--gold);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.9); margin-bottom: 25px;
         }
         .lightbox h2 {
-            font-family: 'Cairo';
-            color: var(--gold-light);
-            font-size: 34px;
-            font-weight: 900;
-            margin: 0 0 15px 0;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.5s ease 0.3s;
+            font-family: 'Cairo'; color: var(--gold-light); font-size: 34px; font-weight: 900;
+            margin: 0 0 15px 0; opacity: 0; transform: translateY(20px); transition: all 0.5s ease 0.3s;
         }
         .lightbox .item-variants {
-            font-size: 20px;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.5s ease 0.4s;
+            font-size: 20px; opacity: 0; transform: translateY(20px); transition: all 0.5s ease 0.4s;
         }
         .lightbox.active h2, .lightbox.active .item-variants {
-            opacity: 1;
-            transform: translateY(0);
+            opacity: 1; transform: translateY(0);
         }
     </style>
 </head>
 <body>
 
-    <!-- شاشة التحميل -->
     <div id="loading-overlay">
         <div class="spinner"></div>
         <h3 style="color:var(--gold); font-family:'Cairo'; font-weight:300; letter-spacing: 2px;">تجهيز قائمة العرض...</h3>
     </div>
 
-    <!-- الترويسة الذهبية -->
     <div class="vip-header">
         <h1 class="logo-text">حـلـوانـي أبنـاء الفـايـدي</h1>
         <div class="sub-text">EXCELLENCE IN EVERY BITE</div>
@@ -286,12 +267,10 @@
         <div class="category-filters" id="categoryFilters"></div>
     </div>
 
-    <!-- مسرح عرض الأصناف -->
     <div class="grid" id="main-grid"></div>
 
-    <!-- نافذة العرض السينمائي (مخفية بشكل افتراضي) -->
     <div id="lightbox" class="lightbox" onclick="closeLightbox()">
-        <div class="lightbox-content" onclick="event.stopPropagation()">
+        <div class="lightbox-content">
             <div class="lightbox-glow"></div>
             <img id="lb-img" src="" alt="صنف فاخر">
             <h2 id="lb-title"></h2>
@@ -352,7 +331,7 @@
             filteredItems.sort((a, b) => b.id - a.id);
 
             filteredItems.forEach((item, index) => {
-                let githubImageUrl = `https://mar1644ly-dotcom.github.io/oms/Images/${item.id}.jpg`;
+                let githubImageUrl = `https://mar1644ly-dotcom.github.io/oms/Images/${item.id}.webp`;
                 let fallbackImage = `https://via.placeholder.com/600x600/1a0508/D4AF37?text=الفايدي`;
                 
                 let variantsText = '';
@@ -369,11 +348,25 @@
 
                 let animationDelay = (index * 0.1) + 's';
 
-                // أضفنا دالة openLightbox عند النقر على حاوية الصورة
+                let imgHtml = '';
+                if(item.premiumStyle === 'plate') {
+                    imgHtml = `
+                    <div class="premium-plate-wrapper">
+                        <img src="${githubImageUrl}" class="premium-plate-img" onerror="this.onerror=null; this.src='${fallbackImage}'" alt="${item.name}">
+                    </div>`;
+                } else if(item.premiumStyle === 'box') {
+                    imgHtml = `
+                    <div class="premium-box-wrapper">
+                        <img src="${githubImageUrl}" class="premium-box-img" onerror="this.onerror=null; this.src='${fallbackImage}'" alt="${item.name}">
+                    </div>`;
+                } else {
+                    imgHtml = `<img src="${githubImageUrl}" class="standard-img" onerror="this.onerror=null; this.src='${fallbackImage}'" alt="${item.name}">`;
+                }
+
                 let cardHtml = `
                 <div class="card" style="animation-delay: ${animationDelay};">
                     <div class="image-container" onclick="openLightbox(${item.id})">
-                        <img src="${githubImageUrl}" onerror="this.onerror=null; this.src='${fallbackImage}'" alt="${item.name}">
+                        ${imgHtml}
                     </div>
                     
                     <div class="card-details">
@@ -394,21 +387,18 @@
 
         // ---------------- دوال العرض السينمائي (Lightbox) ---------------- //
         function openLightbox(id) {
-            // البحث عن الصنف لتجهيز بياناته
             let item = allItems.find(i => i.id === id);
             if(!item) return;
 
-            let githubImageUrl = `https://mar1644ly-dotcom.github.io/oms/Images/${item.id}.jpg`;
+            let githubImageUrl = `https://mar1644ly-dotcom.github.io/oms/Images/${item.id}.webp`;
             let fallbackImage = `https://via.placeholder.com/600x600/1a0508/D4AF37?text=الفايدي`;
 
-            // تمرير البيانات للشاشة السينمائية
             let imgElement = document.getElementById('lb-img');
             imgElement.src = githubImageUrl;
             imgElement.onerror = function() { this.src = fallbackImage; };
             
             document.getElementById('lb-title').innerText = item.name;
 
-            // تجهيز نص الأسعار
             let variantsText = '';
             if (item.variants && Array.isArray(item.variants) && item.variants.length > 0) {
                 let formattedVariants = item.variants.map(v => 
@@ -422,17 +412,14 @@
             }
             document.getElementById('lb-variants').innerHTML = variantsText;
 
-            // إظهار الشاشة وقفل التمرير
             document.getElementById('lightbox').classList.add('active');
             document.body.style.overflow = 'hidden'; 
         }
 
         function closeLightbox() {
-            // إخفاء الشاشة وفتح التمرير
             document.getElementById('lightbox').classList.remove('active');
             document.body.style.overflow = 'auto'; 
             
-            // تفريغ الصورة بعد انتهاء الحركة لتجنب وميض في المرة القادمة
             setTimeout(() => {
                 document.getElementById('lb-img').src = '';
             }, 500);
