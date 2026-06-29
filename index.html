@@ -2,170 +2,532 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>منيو الفايدي (النظام السحابي الذكي)</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منيو المبيعات - حلواني الفايدي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
     <style>
-        body { font-family: 'Cairo', sans-serif; background: #fdfbf7; margin: 0; padding-bottom: 80px; }
-        .top-bar { background: #004d4d; color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; border-bottom: 3px solid #EEDC82; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .top-bar select { padding: 10px; border-radius: 8px; width: 95%; max-width: 400px; font-family: 'Cairo'; font-weight: bold; border: 2px solid #EEDC82; outline: none; background: #fff; color:#004d4d; }
+        :root { 
+            --primary: #800020; 
+            --secondary: #D4AF37; 
+            --bg: #fdfbf7; 
+            --text-dark: #333;
+        }
+
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding-bottom: 90px; 
+            -webkit-tap-highlight-color: transparent;
+        }
         
-        .filter-container { display: flex; overflow-x: auto; gap: 8px; padding: 10px; background: white; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .top-bar { 
+            background: var(--primary); 
+            padding: 15px 15px 20px 15px; 
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            position: sticky; top: 0; z-index: 100;
+        }
+        
+        .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        .logo-title { color: var(--secondary); font-size: 20px; font-weight: 900; margin: 0; line-height: 1.2;}
+        
+        .branch-selector { 
+            padding: 8px 12px; border-radius: 30px; font-family: 'Cairo'; font-weight: bold; font-size: 13px;
+            border: 1px solid var(--secondary); outline: none; background: rgba(255,255,255,0.1); color: #fff; 
+            width: 100%;
+        }
+        .branch-selector option { color: var(--text-dark); }
+        
+        .search-box {
+            width: 100%; padding: 12px 15px; border-radius: 30px; border: none; font-family: 'Cairo'; font-weight: bold;
+            box-sizing: border-box; outline: none; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .banner-slider {
+            display: flex; overflow-x: auto; gap: 10px; padding: 15px;
+            scroll-snap-type: x mandatory; scrollbar-width: none;
+        }
+        .banner-slider::-webkit-scrollbar { display: none; }
+        .banner {
+            min-width: 85%; height: 120px; border-radius: 12px;
+            background: linear-gradient(45deg, var(--primary), #a31030);
+            color: var(--secondary); display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            scroll-snap-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .banner h3 { margin: 0; font-size: 18px; font-weight: 900; }
+        .banner p { margin: 5px 0 0 0; font-size: 13px; font-weight: 400; color: #fff; }
+
+        .filter-container { 
+            display: flex; overflow-x: auto; gap: 8px; padding: 10px 15px; 
+            background: var(--bg); position: sticky; top: 110px; z-index: 99; scrollbar-width: none; border-bottom: 1px solid #eee;
+        }
         .filter-container::-webkit-scrollbar { display: none; }
-        .filter-btn { background: #e0f2f1; color: #004d4d; border: 1px solid #008080; padding: 6px 15px; border-radius: 20px; font-family: 'Cairo'; white-space: nowrap; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .filter-btn.active { background: #EEDC82; color: #004d4d; border-color: #d49500; }
+        .filter-btn { 
+            background: #fff; color: var(--text-dark); border: 1px solid #ddd; 
+            padding: 6px 18px; border-radius: 20px; font-family: 'Cairo'; white-space: nowrap; font-weight: bold; cursor: pointer; transition: 0.3s; 
+        }
+        .filter-btn.active { background: var(--primary); color: var(--secondary); border-color: var(--primary); }
         
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; padding: 15px; max-width: 1000px; margin: 0 auto; transition: 0.3s; }
+        .grid { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+            gap: 15px; padding: 15px; max-width: 1200px; margin: 0 auto; transition: 0.3s; 
+        }
         .grid.dormant { opacity: 0.3; pointer-events: none; filter: grayscale(80%); }
-        .dormant-msg { text-align: center; color: #c0392b; font-weight: bold; padding: 15px; font-size: 16px; background: #fadbd8; border-radius: 8px; margin: 15px auto; max-width: 90%; border: 1px solid #e74c3c; }
+        .dormant-msg { text-align: center; color: var(--primary); font-weight: bold; padding: 15px; font-size: 14px; background: #f9ebeb; border-radius: 8px; margin: 15px; border: 1px dashed var(--primary); }
         
-        .card { background: white; padding: 12px; border-radius: 12px; text-align: center; border-bottom: 4px solid #004d4d; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; }
-        .card img { width: 100%; height: 130px; object-fit: contain; border-radius: 8px; background: #faf8f5; }
-        .code-tag { position: absolute; top: 10px; right: 10px; background: rgba(0, 77, 77, 0.8); color: white; font-size: 11px; padding: 2px 8px; border-radius: 6px; font-weight: bold; }
-        .card-title { color: #004d4d; font-size: 15px; font-weight: 900; margin: 8px 0 4px 0; }
-        .card-price { color: #d35400; font-weight: bold; font-size: 16px; margin-bottom: 10px; background: rgba(211, 84, 0, 0.1); display: inline-block; padding: 2px 10px; border-radius: 6px; }
-        .order-btn { background: #EEDC82; color: #004d4d; border: 2px solid #d49500; padding: 8px; width: 100%; border-radius: 6px; font-family: 'Cairo'; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .order-btn:hover { background: #d49500; color: white; }
+        .card { 
+            background: white; padding: 12px; border-radius: 16px; text-align: center; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; border: 1px solid #f0f0f0; overflow: hidden;
+        }
         
-        .cart-float { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #004d4d; color: #EEDC82; padding: 12px 30px; border-radius: 30px; display: none; cursor: pointer; z-index: 999; font-weight: 900; border: 2px solid #EEDC82; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 16px; }
+        .standard-img { width: 100%; height: 130px; object-fit: cover; border-radius: 12px; background: #faf8f5; }
         
-        #cartModal, #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; border: 3px solid #EEDC82; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .btn-action { background: #27ae60; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-family: 'Cairo'; font-weight: bold; margin-bottom: 10px; cursor: pointer; font-size: 15px; transition: 0.2s; }
-        
-        .cart-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #ccc; padding: 10px 0; text-align: right; }
-        .del-item-btn { background: #e74c3c; color: white; border: none; border-radius: 6px; padding: 4px 12px; cursor: pointer; font-family: 'Cairo'; font-size: 12px; font-weight: bold; margin-top:5px; }
+          /* ======================================================================= */
+/* بداية أكواد "الطبق البيضاوي" و "السفرة 3D" لمنيو المبيعات (الزبائن)     */
+/* ======================================================================= */
 
-        #waiting-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,77,77,0.98); z-index: 1000000; justify-content: center; align-items: center; flex-direction: column; text-align: center; color: white; padding: 20px; box-sizing: border-box; }
-        .spinner { border: 6px solid rgba(255,255,255,0.2); border-top: 6px solid #EEDC82; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
+/* حاوية الطبق البيضاوي المصححة */
+.premium-plate-wrapper {
+    padding: 10px;
+    /* التدرج الفضي والأسود الملكي يعمل الآن بشكل سليم */
+    background: linear-gradient(135deg, #fdfbf7, #050505); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    height: 130px; 
+    border-radius: 12px; 
+    margin-bottom: 8px;
+}
+.premium-plate-img {
+    /* أبعاد الطبق البيضاوي لتناسب الكروت الصغيرة */
+    width: 95%; 
+    max-width: 140px; 
+    height: 95px; 
+    
+    border-radius: 50%; /* شكل بيضاوي */
+    object-fit: contain; /* الاحتواء الكامل لقطعة الحلوى */
+    object-position: center;
+    
+    background-color: transparent; /* خلفية شفافة لدمج الصورة */
+    padding: 0;
+    
+    /* إطارات الفايدي للطبق */
+    border: 3px solid var(--primary); 
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5), 0 0 0 2px var(--secondary); 
+}
+
+/* ======================================================================= */
+
+/* 2. حاوية السفرة */
+.premium-box-wrapper {
+    padding: 15px 10px; /* مساحة إضافية لاحتواء ميلان السفرة */
+    /* التدرج الفضي والأسود الملكي */
+    background: linear-gradient(135deg, #fdfbf7, #050505); 
+    display: flex; justify-content: center; align-items: center;[cite: 2]
+    height: 130px;[cite: 2]
+    border-radius: 12px;[cite: 2]
+    margin-bottom: 8px;[cite: 2]
+    box-sizing: border-box;[cite: 2]
+}
+
+.premium-box-img {
+    /* أبعاد مرنة لتشكيل السفرة حسب نوع المنتج */
+    width: auto; 
+    height: auto; 
+    max-width: 95%; 
+    max-height: 85%;
+    
+    border-radius: 15px; /* انحناء زوايا السفرة (أقل من المنيو الفاخر نظراً لحجم الكرت) */
+    object-fit: contain; 
+    object-position: center;
+    background-color: transparent;
+    padding: 0;
+    
+    /* --- السر التقني: تفعيل البعد الثالث (3D) للسفرة --- */
+    transform: perspective(600px) rotateX(20deg);
+    
+    /* ظلال البعد الثالث لتوحي بأن السفرة موضوعة على طاولة */
+    box-shadow: 
+        0 25px 15px -10px rgba(0, 0, 0, 0.6), /* ظل السفرة السفلي */
+        0 0 0 2px var(--secondary),           /* إطار ذهبي */
+        0 0 0 4px var(--primary);             /* إطار عنابي */
+}
+
+/* ======================================================================= */
+/* نهاية أكواد "الطبق البيضاوي" و "السفرة 3D"                              */
+/* ======================================================================= */
+
+        .card-title { color: var(--text-dark); font-size: 14px; font-weight: 900; margin: 5px 0 4px 0; }
+        .card-price { color: #d35400; font-weight: bold; font-size: 13px; margin-bottom: 10px; }
+        
+        .order-btn { 
+            background: rgba(212, 175, 55, 0.15); color: var(--primary); border: none; 
+            padding: 8px; width: 100%; border-radius: 8px; font-family: 'Cairo'; font-weight: 900; cursor: pointer; transition: 0.2s; font-size: 13px;
+        }
+        .order-btn:hover { background: var(--secondary); color: var(--primary); }
+
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: #fff;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-around;
+            padding: 10px 0; z-index: 1000; border-top: 2px solid var(--secondary);
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #888; font-size: 12px; font-weight: bold; cursor: pointer; position: relative; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 20px; margin-bottom: 2px; }
+        .cart-badge {
+            position: absolute; top: -5px; right: -10px; background: #e74c3c; color: white;
+            font-size: 10px; padding: 2px 6px; border-radius: 50%; font-weight: bold; display: none;
+        }
+
+        .bottom-sheet-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 1001; display: none; opacity: 0; transition: opacity 0.3s;
+        }
+        .bottom-sheet {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: #fff;
+            border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px; box-sizing: border-box; z-index: 1002;
+            transform: translateY(100%); transition: transform 0.3s ease-out;
+        }
+        .sheet-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+        .sheet-title { color: var(--primary); font-weight: 900; font-size: 18px; margin: 0; }
+        .close-sheet { background: none; border: none; font-size: 24px; color: #888; cursor: pointer; }
+        
+        .variant-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 10px; cursor: pointer; }
+        .variant-row.selected { border-color: var(--secondary); background: rgba(212, 175, 55, 0.05); }
+        .var-name { font-weight: bold; color: var(--text-dark); }
+        .var-price { font-weight: 900; color: #d35400; }
+        
+        .qty-controls { display: flex; justify-content: center; align-items: center; gap: 15px; margin: 20px 0; }
+        .qty-btn { background: #eee; border: none; width: 35px; height: 35px; border-radius: 8px; font-size: 20px; font-weight: bold; color: var(--primary); cursor: pointer; }
+        .qty-value { font-size: 20px; font-weight: 900; width: 40px; text-align: center; }
+        
+        .btn-action { 
+            background: var(--primary); color: var(--secondary); border: none; padding: 12px; width: 100%; border-radius: 8px; font-family: 'Cairo'; font-weight: 900; cursor: pointer; font-size: 15px; transition: 0.2s; 
+        }
+
+        #cartModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fdfbf7; z-index: 2000; flex-direction: column; }
+        .cart-header { background: #fff; padding: 15px; text-align: center; border-bottom: 1px solid #eee; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
+        .cart-header h3 { margin: 0; color: var(--primary); }
+        .cart-close { position: absolute; left: 15px; top: 15px; background: none; border: none; font-size: 24px; color: var(--primary); cursor: pointer; }
+        .cart-body { padding: 15px; overflow-y: auto; flex-grow: 1; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 12px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); border: 1px solid #eee; }
+        .del-item-btn { background: #ffeaea; color: #e74c3c; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-family: 'Cairo'; font-size: 12px; font-weight: bold; margin-top:5px; }
+        .cart-footer { background: #fff; padding: 15px; border-top: 1px solid #eee; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); }
+
+        .empty-cart-state { text-align: center; padding: 50px 20px; color: #888; }
+        .empty-cart-state div { font-size: 50px; margin-bottom: 15px; }
+
+        .checkout-form { background:#fff; padding:15px; border-radius:12px; border: 1px solid #eee; margin-top: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);}
+        .checkout-form input, .checkout-form textarea { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; margin-top:10px; font-family:'Cairo'; font-weight:bold; box-sizing:border-box; outline:none; }
+        .checkout-form input:focus, .checkout-form textarea:focus { border-color: var(--primary); }
+        
+        .gps-btn {
+            background: #e8f4fd; color: #2980b9; border: 1px dashed #2980b9; padding: 10px; 
+            width: 100%; border-radius: 8px; font-family: 'Cairo'; font-weight: bold; cursor: pointer; margin-top: 10px;
+        }
+
+        .branch-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #eee; border-radius: 12px; margin-bottom: 10px; background: #faf8f5; }
+        .branch-info h4 { margin: 0 0 5px 0; color: var(--primary); }
+        .branch-info p { margin: 0; font-size: 12px; color: #666; }
+
+        #waiting-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; text-align: center; color: white; padding: 20px; box-sizing: border-box; }
+        .spinner { border: 5px solid rgba(255,255,255,0.2); border-top: 5px solid var(--secondary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        .order-status-box { background: rgba(255,255,255,0.1); border: 2px dashed #EEDC82; padding: 20px; border-radius: 12px; margin-bottom: 20px; width: 100%; max-width: 400px; }
-        .order-status-box h1 { margin: 0 0 10px 0; font-size: 22px; color: #EEDC82; }
-        .btn-wa-action { background: #25D366; color: white; border: none; padding: 12px; border-radius: 8px; font-family: 'Cairo'; font-weight: bold; cursor: pointer; display: none; width: 100%; max-width: 400px; margin-top:10px; font-size: 15px; }
         
-        .btn-track-action { background: #3498db; color: white; border: 2px solid #2980b9; padding: 15px; border-radius: 8px; font-family: 'Cairo'; font-weight: 900; cursor: pointer; display: none; width: 100%; max-width: 400px; margin-top:10px; font-size: 16px; animation: pulseAnim 1.5s infinite alternate; }
-        @keyframes pulseAnim { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.7); } 100% { transform: scale(1.02); box-shadow: 0 0 10px 10px rgba(52, 152, 219, 0); } }
-
+        .status-box { background: rgba(255,255,255,0.1); border: 2px dashed var(--secondary); padding: 30px 20px; border-radius: 12px; max-width: 400px; width: 90%; }
+        #status-icon { font-size: 60px; margin-bottom: 15px; display: none; }
+        
+        /* 💡 تصميم شارة حالة الفرع */
+        .status-badge {
+            font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: bold;
+            display: inline-block; margin-top: 8px; font-family: 'Cairo'; border: 1px solid;
+            transition: all 0.3s ease;
+        }
     </style>
 </head>
 <body>
+
     <div class="top-bar">
-        <h2 style="margin: 0 0 10px 0; color: #EEDC82;">حلواني أبناء الفايدي</h2>
-        <select id="customerBranchSelect" onchange="activateMenu(this)">
-            <option value="" disabled selected>-- جاري تحميل الفروع... --</option>
-        </select>
+        <div class="header-top">
+            <h1 class="logo-title">حلواني الفايدي</h1>
+            <!-- 💡 قسم تحديد الفرع ومؤشر حالة الاتصال -->
+            <div style="display:flex; flex-direction:column; align-items:flex-end; width: 50%;">
+                <select id="customerBranchSelect" class="branch-selector" onchange="activateMenu(this)">
+                    <option value="" disabled selected>تحديد الفرع 🔽</option>
+                </select>
+                <div id="branch-status-badge" class="status-badge" style="display:none;"></div>
+            </div>
+        </div>
+        <input type="text" id="searchInput" class="search-box" placeholder="عن ماذا تبحث اليوم؟ 🔍" oninput="renderMenu()">
     </div>
     
-    <div class="filter-container" id="catButtonsContainer"></div>
-    
-    <div id="dormant-msg" class="dormant-msg">الرجاء اختيار الفرع الأقرب إليك من الأعلى لتفعيل المنيو 👆</div>
-    
-    <div class="grid dormant" id="menu-grid"></div>
-
-    <div class="cart-float" id="cartFloat" onclick="openCartModal()">🛒 إتمام الطلب (<span id="cartBadge">0</span>)</div>
-
-    <div id="modal">
-        <div class="modal-content">
-            <h3 id="modalDesc" style="color: #004d4d; margin-top: 0;"></h3>
-            <input type="number" id="qty-input" value="1" min="1" style="width:100px; text-align:center; font-size:24px; border: 2px solid #004d4d; border-radius: 8px; padding: 10px; font-family:'Cairo'; font-weight:bold; outline:none; margin-bottom: 15px;">
-            <button class="btn-action" onclick="confirmAddToCart()">➕ تأكيد وإضافة للسلة</button>
-            <button class="btn-action" style="background:#7f8c8d;" onclick="document.getElementById('modal').style.display='none'">إلغاء</button>
+    <div class="banner-slider">
+        <div class="banner">
+            <h3>عروض الفايدي 🎉</h3>
+            <p>تشكيلة فاخرة لضيوفك</p>
+        </div>
+        <div class="banner" style="background: linear-gradient(45deg, #d35400, #e67e22);">
+            <h3>توصيل سريع 🛵</h3>
+            <p>لجميع مناطق بنغازي</p>
         </div>
     </div>
 
-    <div id="cartModal">
-        <div class="modal-content" style="max-height:85vh; overflow-y:auto;">
-            <h3 style="color:#004d4d; border-bottom: 2px solid #EEDC82; padding-bottom: 10px; margin-top:0;">🛒 مراجعة سلة المشتريات</h3>
-            <div id="cartItemsContainer"></div>
-            <div style="font-size: 18px; font-weight: 900; color: #d35400; text-align: right; margin: 15px 0;" id="cartTotalDisplay">الإجمالي: 0.00 د.ل</div>
-            
-            <div style="background:#f8f9fa; padding:15px; border-radius:8px; border: 1px solid #ddd; text-align:right; margin-bottom:15px;">
-                <label style="font-weight:bold; font-size:14px; color:#333;">طريقة الاستلام:</label><br>
-                <label style="cursor:pointer;"><input type="radio" name="recv-method" value="pickup" checked onchange="toggleAddress()"> 🚶‍♂️ استلام من الفرع</label><br>
-                <label style="cursor:pointer;"><input type="radio" name="recv-method" value="delivery" onchange="toggleAddress()"> 🛵 توصيل للمنزل</label>
-                
-                <div id="address-box" style="display:none; margin-top:10px;">
-                    <textarea id="cust-address" placeholder="المدينة، المنطقة، الشارع..." style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; font-family:'Cairo'; box-sizing:border-box; outline:none;"></textarea>
-                </div>
-                
-                <input type="text" id="cust-name" placeholder="الاسم الكريم" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; margin-top:10px; font-family:'Cairo'; box-sizing:border-box; outline:none;">
-                <input type="tel" id="cust-phone" placeholder="رقم الهاتف (اختياري)" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; margin-top:10px; font-family:'Cairo'; box-sizing:border-box; outline:none; direction:ltr; text-align:right;">
+    <div class="filter-container" id="catButtonsContainer"></div>
+    <div id="dormant-msg" class="dormant-msg">الرجاء تحديد الفرع الأقرب إليك من الأعلى لتفعيل المنيو 👆</div>
+    
+    <div class="grid dormant" id="menu-grid"></div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="closeCartModal(); closeBranchesSheet();">
+            <div class="nav-icon">🏠</div>الرئيسية
+        </div>
+        <div class="nav-item" onclick="openCartModal()">
+            <div class="nav-icon">🛒<span class="cart-badge" id="cartBadge">0</span></div>السلة
+        </div>
+        <div class="nav-item" onclick="openBranchesSheet()">
+            <div class="nav-icon">📍</div>فروعنا
+        </div>
+    </div>
+
+    <!-- نافذة الأحجام السفلية -->
+    <div class="bottom-sheet-overlay" id="sheetOverlay" onclick="closeSheet(); closeBranchesSheet();"></div>
+    <div class="bottom-sheet" id="variantSheet">
+        <div class="sheet-header">
+            <h3 class="sheet-title" id="sheetItemName">اسم الصنف</h3>
+            <button class="close-sheet" onclick="closeSheet()">×</button>
+        </div>
+        <div id="variantsContainer"></div>
+        <div class="qty-controls">
+            <button class="qty-btn" onclick="adjustQty(-1)">-</button>
+            <div class="qty-value" id="sheetQty">1</div>
+            <button class="qty-btn" onclick="adjustQty(1)">+</button>
+        </div>
+        <button class="btn-action" onclick="confirmAddToCart()">➕ إضافة للسلة</button>
+    </div>
+
+    <!-- نافذة الفروع السفلية -->
+    <div class="bottom-sheet" id="branchesSheet">
+        <div class="sheet-header">
+            <h3 class="sheet-title">فروع حلواني الفايدي</h3>
+            <button class="close-sheet" onclick="closeBranchesSheet()">×</button>
+        </div>
+        <div id="branchesContainer" style="max-height: 60vh; overflow-y: auto;">
+            <div class="branch-item">
+                <div class="branch-info"><h4>فرع السلماني</h4><p>بنغازي - السلماني</p></div>
+                <div style="font-size:20px;">🏪</div>
             </div>
+            <div class="branch-item">
+                <div class="branch-info"><h4>فرع فينيسيا</h4><p>بنغازي - فينيسيا</p></div>
+                <div style="font-size:20px;">🏪</div>
+            </div>
+            <div class="branch-item">
+                <div class="branch-info"><h4>فرع شارع 20</h4><p>بنغازي - شارع 20</p></div>
+                <div style="font-size:20px;">🏪</div>
+            </div>
+            <div class="branch-item">
+                <div class="branch-info"><h4>فرع طريق المطار</h4><p>بنغازي - طريق المطار</p></div>
+                <div style="font-size:20px;">🏪</div>
+            </div>
+            <div class="branch-item">
+                <div class="branch-info"><h4>فرع بوعطني</h4><p>بنغازي - بوعطني</p></div>
+                <div style="font-size:20px;">🏪</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة السلة -->
+    <div id="cartModal">
+        <div class="cart-header">
+            <button class="cart-close" onclick="closeCartModal()">×</button>
+            <h3>سلة المشتريات</h3>
+        </div>
+        <div class="cart-body">
+            <div id="cartItemsContainer"></div>
             
-            <button class="btn-action" onclick="sendOrder()">🚀 اعتماد وإرسال الطلب للفرع</button>
-            <button class="btn-action" style="background:#7f8c8d;" onclick="document.getElementById('cartModal').style.display='none'">رجوع للقائمة</button>
+            <div id="checkoutFormContainer" style="display: none;">
+                <div class="checkout-form">
+                    <label style="font-weight:bold; color:var(--primary);">طريقة الاستلام:</label><br>
+                    <div style="margin-top: 10px; display: flex; gap: 15px;">
+                        <label><input type="radio" name="recv-method" value="pickup" checked onchange="toggleAddress()"> 🚶‍♂️ من الفرع</label>
+                        <label><input type="radio" name="recv-method" value="delivery" onchange="toggleAddress()"> 🛵 توصيل</label>
+                    </div>
+                    <div id="address-box" style="display:none; margin-top:10px;">
+                        <button type="button" class="gps-btn" onclick="getGPSLocation()">📍 حدد موقعي تلقائياً بالـ GPS</button>
+                        <textarea id="cust-address" placeholder="أو أدخل المنطقة والعنوان بالتفصيل (مثال: الماجوري، أرض الحراسة...)"></textarea>
+                    </div>
+                    <input type="text" id="cust-name" placeholder="الاسم الكريم">
+                    <input type="tel" id="cust-phone" placeholder="رقم الهاتف للتواصل" style="direction:ltr; text-align:right;">
+                </div>
+            </div>
+        </div>
+        <div class="cart-footer" id="cartFooterContainer" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <span style="font-weight: bold; color: #555;">الإجمالي:</span>
+                <span style="font-size: 22px; font-weight: 900; color: #d35400;" id="cartTotalDisplay">0.00 د.ل</span>
+            </div>
+            <!-- 💡 تم إضافة الـ ID للزر للتحكم به برمجياً عند انقطاع اتصال الفرع -->
+            <button id="checkout-btn" class="btn-action" style="background:#27ae60; color:#fff;" onclick="sendOrder()">🚀 اعتماد وإرسال الطلب</button>
         </div>
     </div>
 
     <div id="waiting-modal">
         <div class="spinner" id="waiting-spinner"></div>
-        <div class="order-status-box">
-            <h1 id="waiting-title">جاري إرسال طلبك...</h1>
-            <p id="waiting-desc">يرجى الانتظار لحين مراجعة الموظف للطلب.</p>
+        <div class="status-box">
+            <div id="status-icon">✅</div>
+            <h1 id="waiting-title" style="color:var(--secondary); margin-top:0;">جاري إرسال طلبك...</h1>
+            <p id="waiting-desc">الطلب في طريقه لفرعنا، يرجى الانتظار لحين تأكيد الموظف ولا تقم بإغلاق الصفحة.</p>
         </div>
-        
-        <button id="btn-tracking" class="btn-track-action" onclick="openTrackingMap()">📍 تتبع مسار المندوب مباشرة 🛵</button>
-        <button id="btn-contact-cs" class="btn-wa-action" onclick="contactSupport()">💬 تواصل مع الفرع (استفسار)</button>
-        <button id="btn-close-waiting" class="btn-wa-action" style="background:#e74c3c;" onclick="closeWaitingModal()">❌ رجوع وتعديل السلة</button>
-        <button id="btn-new-order" class="btn-wa-action" style="background:#27ae60; margin-top:10px;" onclick="location.reload()">✅ إغلاق وبدء طلب جديد</button>
+        <button id="btn-wa-link" class="btn-action" style="background:#25D366; color:#fff; display:none; margin-top:15px; width:90%;" onclick="openWhatsApp()">تواصل مع الفرع (واتساب) 💬</button>
+        <button id="btn-close-waiting" class="btn-action" style="background:#333; color:#fff; display:none; margin-top:10px; width:90%;" onclick="location.reload()">رجوع للمنيو 🔙</button>
     </div>
+
+    <audio id="bell-sound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 
     <script>
         firebase.initializeApp({ databaseURL: "https://faidy-web-app-default-rtdb.firebaseio.com", projectId: "faidy-web-app" });
         const dbCloud = firebase.database();
-        const ROOT_PATH = 'FAIDY_OMS_V2/';
+        const ITEMS_PATH = 'FAIDY_OMS_V2/Central_Items';
+        const ORDERS_PATH = 'FAIDY_OMS_V2/Live_Orders/';
         
         let allItems = [];
         let currentBranchId = null; 
         let currentBranchPhone = null; 
         let myCart = []; 
-        let currentOrderId = null;
+        let activeCategory = 'الكل';
+        let tempItemData = null;
+        let activeOrderId = null;
+        
+        // 💡 متغيرات المراقبة الحية للفرع
+        let branchPresenceRef = null;
+        let isBranchOnline = true;
 
         window.onload = () => {
             dbCloud.ref('OMS_SAAS_V1/Companies/faidy/settings/branches').once('value').then(snap => {
                 let sel = document.getElementById('customerBranchSelect');
                 if(snap.exists()) {
                     let branches = snap.val() || [];
-                    sel.innerHTML = '<option value="" disabled selected>-- الرجاء اختيار الفرع الأقرب إليك --</option>';
+                    sel.innerHTML = '<option value="" disabled selected>تحديد الفرع 🔽</option>';
                     branches.forEach(b => { if(b) sel.innerHTML += `<option value="${b.id}" data-phone="${b.phone}">${b.name}</option>`; });
                 } else {
-                    sel.innerHTML = '<option value="" disabled selected>لا توجد فروع متاحة حالياً</option>';
+                    sel.innerHTML = `
+                        <option value="" disabled selected>تحديد الفرع 🔽</option>
+                        <option value="salmani" data-phone="218900000000">السلماني</option>
+                        <option value="venice" data-phone="218900000000">فينيسيا</option>
+                        <option value="st20" data-phone="218900000000">شارع 20</option>
+                        <option value="airport" data-phone="218900000000">طريق المطار</option>
+                        <option value="buatni" data-phone="218900000000">بوعطني</option>
+                    `;
                 }
             });
 
-            dbCloud.ref('OMS_SAAS_V1/Companies/faidy/items').on('value', snap => {
+            dbCloud.ref(ITEMS_PATH).on('value', snap => {
                 if(snap.exists()) {
                     let itemsObj = snap.val();
-                    allItems = Object.values(itemsObj).filter(i => i.selectedForMenu !== false);
+                    allItems = Object.values(itemsObj).filter(i => i.active !== false);
+                    renderCategories();
                     renderMenu();
                 }
             });
+            
+            loadCustomerData();
         };
 
-        function renderMenu() {
+        // 💡 دالة المراقبة الحية لاتصال الفرع
+        function monitorBranchPresence(branchId) {
+            if(branchPresenceRef) branchPresenceRef.off(); // إلغاء المراقبة للفرع القديم إن وجد
+            branchPresenceRef = dbCloud.ref('FAIDY_OMS_V2/Branch_Presence/' + branchId + '/online');
+            
+            branchPresenceRef.on('value', snap => {
+                // لتجنب تعطل النظام قبل ربط شاشات الفروع، سنعتبر الفرع متصل إلا إذا كتب صراحة أنه "false" (مغلق)
+                isBranchOnline = (snap.val() !== false); 
+                
+                let badge = document.getElementById('branch-status-badge');
+                let orderBtn = document.getElementById('checkout-btn');
+                badge.style.display = 'inline-block';
+                
+                if(isBranchOnline) {
+                    badge.innerHTML = '🟢 الفرع متاح للطلبات';
+                    badge.style.background = '#e8f5e9'; badge.style.color = '#2e7d32'; badge.style.borderColor = '#c8e6c9';
+                    if(orderBtn) { 
+                        orderBtn.disabled = false; 
+                        orderBtn.style.background = '#27ae60'; 
+                        orderBtn.innerText = '🚀 اعتماد وإرسال الطلب'; 
+                    }
+                } else {
+                    badge.innerHTML = '🔴 الفرع غير متصل بالنت';
+                    badge.style.background = '#ffeaea'; badge.style.color = '#e74c3c'; badge.style.borderColor = '#ffcccc';
+                    if(orderBtn) { 
+                        orderBtn.disabled = true; 
+                        orderBtn.style.background = '#95a5a6'; 
+                        orderBtn.innerText = 'الفرع مغلق حالياً 🚫'; 
+                    }
+                }
+            });
+        }
+
+        function renderCategories() {
             let cats = [...new Set(allItems.map(i => i.cat))];
             let catContainer = document.getElementById('catButtonsContainer');
-            catContainer.innerHTML = `<button class="filter-btn active" onclick="filterByCat('all', this)">الكل</button>`;
+            catContainer.innerHTML = `<button class="filter-btn active" onclick="filterByCat('الكل', this)">الكل</button>`;
             cats.forEach(c => { catContainer.innerHTML += `<button class="filter-btn" onclick="filterByCat('${c}', this)">${c}</button>`; });
+        }
 
+        function filterByCat(c, btn) {
+            activeCategory = c;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            renderMenu();
+        }
+
+        function renderMenu() {
             let grid = document.getElementById('menu-grid');
             grid.innerHTML = '';
+            let query = document.getElementById('searchInput').value.toLowerCase().trim();
             
-            allItems.forEach(item => {
-                // التحديث الجوهري: استدعاء الصورة عبر رقم المعرف الفريد للصنف
-                let imgSrc = `Images/${item.id}.jpg`;
+            let filtered = allItems.filter(item => {
+                let matchSearch = (!query) || item.name.toLowerCase().includes(query);
+                let matchCat = (activeCategory === 'الكل' || item.cat === activeCategory);
+                return matchSearch && matchCat;
+            });
+
+            filtered.sort((a, b) => b.id - a.id);
+
+            filtered.forEach(item => {
+                let minPrice = 0; let priceText = '';
+                if(item.variants && item.variants.length > 0) {
+                    minPrice = Math.min(...item.variants.map(v => v.price));
+                    priceText = item.variants.length > 1 ? `يبدأ من ${minPrice}` : `${minPrice}`;
+                } else {
+                    minPrice = item.price || 0; priceText = `${minPrice}`;
+                    item.variants = [{name: item.unit || 'قطعة', price: minPrice}];
+                }
+
+                let imgWebp = `https://mar1644ly-dotcom.github.io/oms/Images/${item.id}.webp`;
+                let imgJpg = `https://mar1644ly-dotcom.github.io/oms/Images/${item.id}.jpg`;
+                let imgFallback = `https://via.placeholder.com/400x300/800020/D4AF37?text=الفايدي`;
+
+                let imgHtml = '';
+                if(item.premiumStyle === 'plate') {
+                    imgHtml = `<div class="premium-plate-wrapper"><img src="${imgWebp}" class="premium-plate-img" loading="lazy" onerror="this.onerror=null; this.src='${imgJpg}'; this.onerror=function(){this.src='${imgFallback}'}"></div>`;
+                } else if(item.premiumStyle === 'box') {
+                    imgHtml = `<div class="premium-box-wrapper"><img src="${imgWebp}" class="premium-box-img" loading="lazy" onerror="this.onerror=null; this.src='${imgJpg}'; this.onerror=function(){this.src='${imgFallback}'}"></div>`;
+                } else {
+                    imgHtml = `<img src="${imgWebp}" class="standard-img" loading="lazy" onerror="this.onerror=null; this.src='${imgJpg}'; this.onerror=function(){this.src='${imgFallback}'}">`;
+                }
 
                 grid.innerHTML += `
-                    <div class="card" data-category="${item.cat}">
-                        <div class="code-tag">رقم: ${item.code || '000'}</div>
-                        <img src="${imgSrc}" loading="lazy" onerror="this.src='https://via.placeholder.com/350x220?text=بدون+صورة'">
+                    <div class="card">
+                        ${imgHtml}
                         <h3 class="card-title">${item.name}</h3>
-                        <div class="card-price">${item.price} د.ل</div>
-                        <button class="order-btn" onclick="openQtyModal('${item.name.replace(/'/g,"\\'")}', '${item.code}', '${item.price}', ${item.id})">🛒 أضف للسلة</button>
+                        <div class="card-price">${priceText} د.ل</div>
+                        <button class="order-btn" onclick="openVariantSheet(${item.id})">اختر الحجم والكمية ➕</button>
                     </div>`;
             });
         }
@@ -176,62 +538,121 @@
             currentBranchPhone = sel.options[sel.selectedIndex].getAttribute('data-phone');
             document.getElementById('dormant-msg').style.display = 'none';
             document.getElementById('menu-grid').classList.remove('dormant');
+            
+            // 💡 استدعاء المراقبة الحية عند اختيار الفرع
+            monitorBranchPresence(currentBranchId);
         }
 
-        function filterByCat(c, btn) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
-            document.querySelectorAll('.card').forEach(card => {
-                card.style.display = (c === 'all' || card.dataset.category === c) ? 'block' : 'none';
-            });
+        function openBranchesSheet() {
+            document.getElementById('sheetOverlay').style.display = 'block';
+            document.getElementById('branchesSheet').style.transform = 'translateY(0)';
+            setTimeout(() => { document.getElementById('sheetOverlay').style.opacity = '1'; }, 10);
         }
 
-        function openQtyModal(n,c,p,id) { 
-            window.tempItem = {id:id, name:n, code:c, price:parseFloat(p), qty:1}; 
-            document.getElementById('modalDesc').innerText = n + " (" + p + " د.ل)"; 
-            document.getElementById('qty-input').value = 1; 
-            document.getElementById('modal').style.display = 'flex'; 
+        function closeBranchesSheet() {
+            document.getElementById('branchesSheet').style.transform = 'translateY(100%)';
+            document.getElementById('sheetOverlay').style.opacity = '0';
+            setTimeout(() => { document.getElementById('sheetOverlay').style.display = 'none'; }, 300);
         }
-        
-        function confirmAddToCart() { 
-            window.tempItem.qty = parseInt(document.getElementById('qty-input').value); 
-            let ex = myCart.find(i=>i.id===window.tempItem.id); 
-            if(ex) ex.qty += window.tempItem.qty; else myCart.push(window.tempItem); 
-            document.getElementById('modal').style.display = 'none'; 
-            updateCartUI(); 
-        }
-        
-        function updateCartUI() { 
-            document.getElementById('cartBadge').innerText = myCart.reduce((s,i)=>s+i.qty,0); 
-            document.getElementById('cartFloat').style.display = myCart.length > 0 ? 'block' : 'none'; 
-        }
-        
-        function openCartModal() {
-            let html = ''; let total = 0;
-            myCart.forEach((i, idx) => { 
-                let t = i.price * i.qty; total += t;
-                html += `
-                    <div class="cart-item">
-                        <div>
-                            <b style="color:#004d4d;">${i.name}</b><br>
-                            <span style="font-size:12px; color:#666; font-weight:bold;">الكمية: ${i.qty} | السعر: ${i.price} د.ل</span>
-                        </div>
-                        <div style="text-align:left;">
-                            <b style="color:#d35400; display:block; margin-bottom:5px;">${t.toFixed(2)} د.ل</b>
-                            <button class="del-item-btn" onclick="removeFromCart(${idx})">حذف 🗑️</button>
-                        </div>
+
+        function openVariantSheet(id) {
+            if(!currentBranchId) { alert("الرجاء تحديد الفرع من أعلى الشاشة أولاً لتتمكن من الطلب."); return; }
+            let item = allItems.find(i => i.id === id);
+            if(!item) return;
+
+            tempItemData = { itemBase: item, selectedVariantIndex: 0, qty: 1 };
+            document.getElementById('sheetItemName').innerText = item.name;
+            document.getElementById('sheetQty').innerText = '1';
+
+            let varContainer = document.getElementById('variantsContainer');
+            varContainer.innerHTML = '';
+            item.variants.forEach((v, idx) => {
+                let isSelected = idx === 0 ? 'selected' : '';
+                varContainer.innerHTML += `
+                    <div class="variant-row ${isSelected}" id="var-row-${idx}" onclick="selectVariant(${idx})">
+                        <span class="var-name">${v.name}</span>
+                        <span class="var-price">${v.price} د.ل</span>
                     </div>`;
             });
-            document.getElementById('cartItemsContainer').innerHTML = html;
-            document.getElementById('cartTotalDisplay').innerText = "الإجمالي: " + total.toFixed(2) + " د.ل";
+
+            document.getElementById('sheetOverlay').style.display = 'block';
+            document.getElementById('variantSheet').style.transform = 'translateY(0)';
+            setTimeout(() => { document.getElementById('sheetOverlay').style.opacity = '1'; }, 10);
+        }
+
+        function closeSheet() {
+            document.getElementById('variantSheet').style.transform = 'translateY(100%)';
+            document.getElementById('sheetOverlay').style.opacity = '0';
+            setTimeout(() => { document.getElementById('sheetOverlay').style.display = 'none'; }, 300);
+        }
+
+        function selectVariant(idx) {
+            tempItemData.selectedVariantIndex = idx;
+            document.querySelectorAll('.variant-row').forEach(row => row.classList.remove('selected'));
+            document.getElementById('var-row-' + idx).classList.add('selected');
+        }
+
+        function adjustQty(change) {
+            let newQty = tempItemData.qty + change;
+            if(newQty >= 1) { tempItemData.qty = newQty; document.getElementById('sheetQty').innerText = newQty; }
+        }
+
+        function confirmAddToCart() {
+            let item = tempItemData.itemBase;
+            let variant = item.variants[tempItemData.selectedVariantIndex];
+            let cartItem = {
+                id: item.id + '_' + tempItemData.selectedVariantIndex,
+                itemId: item.id, name: item.name, varName: variant.name,
+                price: variant.price, qty: tempItemData.qty, code: item.code || '000'
+            };
+
+            let ex = myCart.find(i => i.id === cartItem.id); 
+            if(ex) ex.qty += cartItem.qty; else myCart.push(cartItem); 
+            
+            closeSheet(); updateCartUI();
+        }
+
+        function updateCartUI() {
+            let totalQty = myCart.reduce((s,i) => s + i.qty, 0);
+            let badge = document.getElementById('cartBadge');
+            badge.innerText = totalQty; badge.style.display = totalQty > 0 ? 'inline-block' : 'none';
+        }
+
+        function openCartModal() {
+            let container = document.getElementById('cartItemsContainer');
+            let form = document.getElementById('checkoutFormContainer');
+            let footer = document.getElementById('cartFooterContainer');
+            
+            if(myCart.length === 0) {
+                container.innerHTML = `<div class="empty-cart-state"><div>🛒</div><h3 style="color:var(--primary);">سلتك فارغة</h3><p>تصفح المنيو وأضف أشهى الحلويات</p></div>`;
+                form.style.display = 'none'; footer.style.display = 'none';
+            } else {
+                let html = ''; let total = 0;
+                myCart.forEach((i, idx) => { 
+                    let t = i.price * i.qty; total += t;
+                    html += `
+                        <div class="cart-item">
+                            <div style="flex-grow:1; text-align:right;">
+                                <b style="color:var(--primary); font-size:15px;">${i.name}</b><br>
+                                <span style="font-size:13px; color:#666;">الحجم: <b style="color:var(--text-dark);">${i.varName}</b></span><br>
+                                <span style="font-size:13px; color:#666;">الكمية: ${i.qty} | السعر: ${i.price} د.ل</span>
+                            </div>
+                            <div style="text-align:left; display:flex; flex-direction:column; align-items:flex-end;">
+                                <b style="color:#d35400; font-size:16px;">${t.toFixed(2)} د.ل</b>
+                                <button class="del-item-btn" onclick="removeFromCart(${idx})">حذف 🗑️</button>
+                            </div>
+                        </div>`;
+                });
+                container.innerHTML = html;
+                document.getElementById('cartTotalDisplay').innerText = total.toFixed(2) + " د.ل";
+                form.style.display = 'block'; footer.style.display = 'block';
+            }
             document.getElementById('cartModal').style.display = 'flex';
         }
 
-        function removeFromCart(idx) { 
-            myCart.splice(idx, 1); updateCartUI(); 
-            if(myCart.length > 0) openCartModal(); else document.getElementById('cartModal').style.display = 'none';
-        }
-
+        function closeCartModal() { document.getElementById('cartModal').style.display = 'none'; }
+        function removeFromCart(idx) { myCart.splice(idx, 1); updateCartUI(); openCartModal(); }
+        
         function toggleAddress() {
             let isDel = document.querySelector('input[name="recv-method"]:checked').value === 'delivery';
             document.getElementById('address-box').style.display = isDel ? 'block' : 'none';
@@ -239,121 +660,122 @@
             document.getElementById('cust-name').placeholder = isDel ? "الاسم الكريم (مطلوب للتوصيل)*" : "الاسم الكريم";
         }
 
+        function getGPSLocation() {
+            if (navigator.geolocation) {
+                document.getElementById('cust-address').value = "جاري تحديد الموقع بدقة...";
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        let lat = position.coords.latitude;
+                        let lng = position.coords.longitude;
+                        let mapLink = `https://www.google.com/maps?q=${lat},${lng}`;
+                        
+                        let currentText = document.getElementById('cust-address').value;
+                        if(currentText === "جاري تحديد الموقع بدقة...") currentText = "";
+                        
+                        document.getElementById('cust-address').value = currentText + `\n📍 رابط الموقع الدقيق: ${mapLink}`;
+                    },
+                    (error) => { 
+                        alert("تعذر تحديد الموقع. يرجى التأكد من تفعيل صلاحية الـ GPS في متصفحك أو إدخال العنوان يدوياً."); 
+                        document.getElementById('cust-address').value = "";
+                    },
+                    { enableHighAccuracy: true }
+                );
+            } else {
+                alert("المتصفح الخاص بك لا يدعم ميزة تحديد الموقع.");
+            }
+        }
+
+        function saveCustomerData(name, phone, addr) {
+            localStorage.setItem('faidy_cust_name', name);
+            localStorage.setItem('faidy_cust_phone', phone);
+            if(addr && !addr.includes('google.com/maps')) {
+                localStorage.setItem('faidy_cust_addr', addr);
+            }
+        }
+        
+        function loadCustomerData() {
+            document.getElementById('cust-name').value = localStorage.getItem('faidy_cust_name') || '';
+            document.getElementById('cust-phone').value = localStorage.getItem('faidy_cust_phone') || '';
+            document.getElementById('cust-address').value = localStorage.getItem('faidy_cust_addr') || '';
+        }
+
         function sendOrder() {
-            if(!currentBranchId) return alert("الرجاء اختيار الفرع من أعلى الشاشة أولاً!");
-            
+            // حماية أخيرة: منع الإرسال إذا كان الفرع مغلق
+            if(!isBranchOnline) {
+                alert("عذراً! الفرع لا يستقبل طلبات حالياً، يرجى المحاولة في وقت لاحق أو اختيار فرع آخر.");
+                return;
+            }
+
             let method = document.querySelector('input[name="recv-method"]:checked').value;
             let phone = document.getElementById('cust-phone').value.trim();
             let addr = document.getElementById('cust-address').value.trim();
             let name = document.getElementById('cust-name').value.trim();
 
-            if(method === 'delivery') {
-                if(!name || !phone || !addr) return alert("الرجاء إكمال بيانات التوصيل (الاسم، الهاتف، العنوان)!");
-            }
+            if(method === 'delivery' && (!name || !phone || !addr)) { return alert("الرجاء إكمال بيانات التوصيل كاملة!"); }
 
-            currentOrderId = Math.floor(1000 + Math.random() * 9000); 
+            saveCustomerData(name, phone, addr);
+
+            activeOrderId = Math.floor(1000 + Math.random() * 9000); 
             let total = myCart.reduce((s,i)=>s+(i.price*i.qty),0);
             
             let orderData = {
-                id: currentOrderId, status: 'pending', rejectReason: '', timestamp: firebase.database.ServerValue.TIMESTAMP,
-                customer: { name: name || 'زبون', phone: phone || 'غير مدرج', method: method, address: addr || 'لا يوجد' },
+                id: activeOrderId, status: 'pending', timestamp: firebase.database.ServerValue.TIMESTAMP,
+                customer: { name: name || 'زبون', phone: phone || 'غير محدد', method: method, address: addr || 'لا يوجد' },
                 items: myCart, totalAmount: total
             };
 
             document.getElementById('cartModal').style.display = 'none';
-            showWaitingModal("⏳ جاري مراجعة طلبك...", "ننتظر تأكيد موظف الفرع لتوافر الأصناف، يرجى عدم الإغلاق.", true);
-
-            let orderRef = dbCloud.ref(ROOT_PATH + 'Live_Orders/' + currentBranchId + '/' + currentOrderId);
-            orderRef.set(orderData).then(() => {
-                sendWhatsAppMsg(orderData);
-                orderRef.on('value', (snap) => { 
-                    if(snap.exists()) handleOrderDecision(snap.val()); 
-                });
-            }).catch(e => { alert("حدث خطأ في الاتصال."); closeWaitingModal(); });
-        }
-
-        function sendWhatsAppMsg(data) {
-            let currentUrl = window.location.href.split('?')[0];
-            let baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
-            let trackingLink = `${baseUrl}/tracking.html?role=customer&id=${data.id}`;
-
-            let msg = `مرحباً حلواني أبناء الفايدي، أود طلب:\n\n`;
-            msg += `🔖 *رقم الطلب (للتتبع):* ${data.id}\n\n`;
-            msg += `👤 *الاسم:* ${data.customer.name}\n`;
-            msg += `📞 *الرقم:* ${data.customer.phone}\n`;
-            if(data.customer.method === 'delivery') {
-                msg += `🚚 *الاستلام:* توصيل للمنزل\n`;
-                msg += `📍 *العنوان:* ${data.customer.address}\n`;
-            } else {
-                msg += `🚶‍♂️ *الاستلام:* من الفرع شخصياً\n`;
-            }
-            msg += `====================\n\n`;
-
-            data.items.forEach(item => {
-                msg += `🛒 *${item.name}*\nرقم الصنف: ${item.code}\nالكمية: ${item.qty}\nالسعر: ${(item.price * item.qty).toFixed(2)} د.ل\n`;
-                msg += `-------------------\n`;
-            });
-            msg += `\n💰 *الإجمالي الكلي: ${data.totalAmount.toFixed(2)} د.ل*\n\n`;
             
-            if(data.customer.method === 'delivery') {
-                msg += `🗺️ *رابط التتبع المباشر للطلب:*\n${trackingLink}`;
-            }
-
-            window.open("https://wa.me/" + currentBranchPhone + "?text=" + encodeURIComponent(msg), "_blank");
-        }
-
-        function showWaitingModal(title, desc, showSpinner) {
             document.getElementById('waiting-modal').style.display = 'flex';
-            document.getElementById('waiting-spinner').style.display = showSpinner ? 'block' : 'none';
-            document.getElementById('waiting-title').innerText = title;
-            document.getElementById('waiting-desc').innerText = desc;
-            
-            document.getElementById('btn-contact-cs').style.display = 'none';
+            document.getElementById('waiting-spinner').style.display = 'block';
+            document.getElementById('status-icon').style.display = 'none';
+            document.getElementById('waiting-title').innerText = "جاري إرسال طلبك...";
+            document.getElementById('waiting-desc').innerText = "ننتظر رد موظف الفرع، يرجى عدم الإغلاق.";
+            document.getElementById('btn-wa-link').style.display = 'none';
             document.getElementById('btn-close-waiting').style.display = 'none';
-            document.getElementById('btn-new-order').style.display = 'none';
-            document.getElementById('btn-tracking').style.display = 'none';
-            
-            document.getElementById('waiting-spinner').style.borderColor = "rgba(255,255,255,0.2)";
-            document.getElementById('waiting-spinner').style.borderTopColor = "#EEDC82";
-            document.getElementById('waiting-title').style.color = "#EEDC82";
+
+            let orderRef = dbCloud.ref(ORDERS_PATH + currentBranchId + '/' + activeOrderId);
+            orderRef.set(orderData).then(() => {
+                
+                orderRef.on('value', (snap) => {
+                    let order = snap.val();
+                    if(!order) return;
+
+                    let bell = document.getElementById('bell-sound');
+                    
+                    if(order.status === 'accepted') {
+                        bell.play().catch(e => console.log("Sound blocked by browser"));
+                        document.getElementById('waiting-spinner').style.display = 'none';
+                        document.getElementById('status-icon').innerText = "✅";
+                        document.getElementById('status-icon').style.display = 'block';
+                        document.getElementById('waiting-title').innerText = "تم قبول الطلب!";
+                        document.getElementById('waiting-title').style.color = "#27ae60";
+                        document.getElementById('waiting-desc').innerText = "طلبك قيد التجهيز في الفرع الآن.\nرقم الطلب: #" + activeOrderId;
+                        document.getElementById('btn-wa-link').style.display = 'block';
+                        document.getElementById('btn-close-waiting').innerText = "إنهاء وإغلاق";
+                        document.getElementById('btn-close-waiting').style.display = 'block';
+                        myCart = []; updateCartUI(); 
+                    } 
+                    else if(order.status === 'rejected') {
+                        bell.play().catch(e => console.log("Sound blocked by browser"));
+                        document.getElementById('waiting-spinner').style.display = 'none';
+                        document.getElementById('status-icon').innerText = "❌";
+                        document.getElementById('status-icon').style.display = 'block';
+                        document.getElementById('waiting-title').innerText = "نعتذر منك";
+                        document.getElementById('waiting-title').style.color = "#e74c3c";
+                        document.getElementById('waiting-desc').innerText = "تم رفض الطلب. السبب: " + (order.rejectReason || "ضغط عمل وتزاحم في الفرع");
+                        document.getElementById('btn-close-waiting').innerText = "رجوع وتعديل الطلب 🔙";
+                        document.getElementById('btn-close-waiting').style.display = 'block';
+                    }
+                });
+
+            }).catch(e => { alert("حدث خطأ في الاتصال بالإنترنت."); location.reload(); });
         }
 
-        function closeWaitingModal() { document.getElementById('waiting-modal').style.display = 'none'; }
-
-        function handleOrderDecision(data) {
-            if(data.status === 'accepted') {
-                showWaitingModal("👨‍🍳 تم قبول الطلب!", "طلبك قيد التجهيز في الفرع الآن.\n(رقم الطلب: " + data.id + ")", true);
-                document.getElementById('waiting-spinner').style.borderColor = "rgba(255,255,255,0.2)";
-                document.getElementById('waiting-spinner').style.borderTopColor = "#f39c12"; 
-                document.getElementById('waiting-title').style.color = "#f39c12";
-                
-            } else if (data.status === 'completed') {
-                if (data.customer.method === 'delivery') {
-                    showWaitingModal("🛵 المندوب في الطريق!", "طلبك جاهز ومع المندوب وفي الطريق إليك.\n(رقم الطلب: " + data.id + ")", false);
-                    document.getElementById('waiting-title').style.color = "#3498db";
-                    document.getElementById('btn-tracking').style.display = 'block';
-                } else {
-                    showWaitingModal("🎉 طلبك جاهز!", "تفضل بزيارة الفرع لاستلام طلبك.\n(رقم الطلب: " + data.id + ")", false);
-                    document.getElementById('waiting-title').style.color = "#27ae60";
-                }
-                
-                document.getElementById('btn-contact-cs').style.display = 'block';
-                document.getElementById('btn-new-order').style.display = 'block';
-                
-                myCart = []; updateCartUI();
-
-            } else if (data.status === 'rejected') {
-                showWaitingModal("❌ نعتذر منك", "تعذر تنفيذ الطلب. السبب: " + (data.rejectReason || "ضغط عمل."), false);
-                document.getElementById('waiting-title').style.color = "#e74c3c";
-                document.getElementById('btn-close-waiting').style.display = 'block'; 
-            }
+        function openWhatsApp() {
+            if(!currentBranchPhone) { alert("رقم الفرع غير متوفر."); return; }
+            window.open(`https://wa.me/${currentBranchPhone}?text=مرحباً، أستفسر بخصوص طلبي المعتمد رقم: #${activeOrderId}`, "_blank");
         }
-
-        function openTrackingMap() {
-            window.location.href = `tracking.html?role=customer&id=${currentOrderId}`;
-        }
-
-        function contactSupport() { window.open("https://wa.me/" + currentBranchPhone + "?text=مرحباً، أستفسر بخصوص الطلب رقم: " + currentOrderId, "_blank"); }
     </script>
 </body>
 </html>
